@@ -477,4 +477,4 @@ $RECYCLE.BIN/
 *.lnk
 
 output/uploads/*
-health_examination_api/bin
+handover_api/bin

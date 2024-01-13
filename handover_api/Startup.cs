@@ -24,6 +24,8 @@ builder.Services.AddEntityFrameworkMySQL().AddDbContext<HandoverContext>(options
     options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
            .EnableSensitiveDataLogging();
 });
+// AutoMapper
+builder.Services.ConfigureMappings();
 
 
 builder.Services.AddControllers().AddJsonOptions(options =>

@@ -31,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
@@ -50,7 +52,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controllers\Dto\" />
-    <Folder Include="Controllers\Request\" />
     <Folder Include="Sql\" />
     <Folder Include="uploads\" />
   </ItemGroup>

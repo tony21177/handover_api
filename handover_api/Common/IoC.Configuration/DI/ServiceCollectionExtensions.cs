@@ -1,4 +1,5 @@
 ﻿using handover_api.Service;
+using System.Reflection;
 
 namespace handover_api.Common.IoC.Configuration.DI
 {
@@ -10,6 +11,12 @@ namespace handover_api.Common.IoC.Configuration.DI
             {
                 services.AddScoped<AuthLayerService>();
             }
+        }
+
+        public static void ConfigureMappings(this IServiceCollection services)
+        {
+            //Automap settings
+            services?.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
     }
 }
