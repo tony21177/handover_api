@@ -1,4 +1,5 @@
 ﻿using handover_api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace handover_api.Service
 {
@@ -14,6 +15,10 @@ namespace handover_api.Service
         public List<Authlayer> GetAllAuthlayers()
         {
             return _dbContext.Authlayers.ToList();
+        }
+        public async Task<Authlayer?> GetByAuthValue(short authValue)
+        {
+            return await _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).FirstAsync();
         }
 
         public List<Authlayer> UpdateAuthlayers(List<Authlayer> authlayers)
@@ -32,6 +37,24 @@ namespace handover_api.Service
             // 將變更保存到資料庫
             _dbContext.SaveChanges();
             return updatedAuthLayers;
+        }
+
+        public Authlayer AddAuthlayer(Authlayer newAuthlayer)
+        {
+            _dbContext.Authlayers.Add(newAuthlayer);
+            _dbContext.SaveChanges(true);
+            return newAuthlayer;
+        }
+
+        public void DeleteAuthLayer(int id)
+        {
+            var authLayerToDelete = new Authlayer { Id = id };
+            // 將實體的狀態設置為 'Deleted'
+            _dbContext.Entry(authLayerToDelete).State = EntityState.Deleted;
+
+            // 將更改應用到資料庫
+            _dbContext.SaveChanges();
+            return;
         }
     }
 }

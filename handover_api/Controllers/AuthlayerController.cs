@@ -15,10 +15,12 @@ namespace handover_api.Controllers
     {
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
-        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper)
+        private readonly ILogger<AuthlayerController> _logger;
+        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger)
         {
             _authLayerService = authLayerService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("list")]
@@ -38,7 +40,6 @@ namespace handover_api.Controllers
         public CommonResponse<List<Authlayer>> Update(List<UpdateAuthlayerRequest> updateAuthlayerListRequest)
         {
             var authlayerList = _mapper.Map<List<Authlayer>>(updateAuthlayerListRequest);
-            // TODO
             var data = _authLayerService.UpdateAuthlayers(authlayerList);
 
             var response = new CommonResponse<List<Authlayer>>()
@@ -48,6 +49,37 @@ namespace handover_api.Controllers
                 Data = data
             };
             return response;
+        }
+
+        [HttpPost("create")]
+        public CommonResponse<Authlayer> Create(CreateAuthlayerRequest createAuthlayerRequest)
+        {
+            var newAuthLayer = _mapper.Map<Authlayer>(createAuthlayerRequest);
+            // TODO
+            var data = _authLayerService.AddAuthlayer(newAuthLayer);
+
+            var response = new CommonResponse<Authlayer>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return response;
+        }
+
+        [HttpDelete("delete/{id}")]
+        public IActionResult Delete(int id)
+        {
+
+            _authLayerService.DeleteAuthLayer(id);
+
+            var response = new CommonResponse<Authlayer>()
+            {
+                Result = true,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
         }
 
     }

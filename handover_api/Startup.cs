@@ -23,7 +23,7 @@ builder.Services.AddEntityFrameworkMySQL().AddDbContext<HandoverContext>(options
     options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
            .EnableSensitiveDataLogging();
-});
+}, ServiceLifetime.Scoped);
 // AutoMapper
 builder.Services.ConfigureMappings();
 

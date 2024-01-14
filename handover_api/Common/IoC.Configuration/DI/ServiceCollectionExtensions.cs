@@ -10,6 +10,7 @@ namespace handover_api.Common.IoC.Configuration.DI
             if (services != null)
             {
                 services.AddScoped<AuthLayerService>();
+                services.AddScoped<MemberService>();
             }
         }
 
