@@ -6,7 +6,7 @@ namespace handover_api.Controllers.Dto
     {
         //public int Id { get; set; }
         public string Account { get; set; }
-        //public string Password { get; set; }
+        public string Password { get; set; }
         public string DisplayName { get; set; }
         public string UserId { get; set; }
         public bool? IsActive { get; set; }
