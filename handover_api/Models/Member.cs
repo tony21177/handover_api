@@ -30,7 +30,7 @@ namespace handover_api.Models
         [StringLength(45)]
         public string UserId { get; set; }
         public bool? IsActive { get; set; }
-        public short? AuthValue { get; set; }
+        public short AuthValue { get; set; }
         [Column(TypeName = "timestamp")]
         public DateTime? CreatedTime { get; set; }
         [Column("PhotoURL")]

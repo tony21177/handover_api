@@ -16,9 +16,9 @@ namespace handover_api.Service
         {
             return _dbContext.Authlayers.ToList();
         }
-        public async Task<Authlayer?> GetByAuthValue(short authValue)
+        public Authlayer? GetByAuthValue(short authValue)
         {
-            return await _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).FirstAsync();
+            return _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).First();
         }
 
         public List<Authlayer> UpdateAuthlayers(List<Authlayer> authlayers)

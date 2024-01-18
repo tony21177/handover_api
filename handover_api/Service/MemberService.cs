@@ -16,7 +16,12 @@ namespace handover_api.Service
 
         public Member? GetMemberByUserId(string userId)
         {
-            return _dbContext.Members.Where(member => member.UserId == userId).First();
+            return _dbContext.Members.Where(member => member.UserId == userId).FirstOrDefault();
+        }
+
+        public Member? GetMemberByAccount(string account)
+        {
+            return _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
         }
 
         public List<Member> GetAllMembers()

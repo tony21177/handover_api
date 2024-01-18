@@ -1,4 +1,5 @@
 ﻿using handover_api.Service;
+using handover_api.Utils;
 using System.Reflection;
 
 namespace handover_api.Common.IoC.Configuration.DI
@@ -11,6 +12,7 @@ namespace handover_api.Common.IoC.Configuration.DI
             {
                 services.AddScoped<AuthLayerService>();
                 services.AddScoped<MemberService>();
+                services.AddSingleton<JwtHelpers>();
             }
         }
 

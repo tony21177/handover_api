@@ -21,7 +21,7 @@ namespace handover_api.Models
         public int Id { get; set; }
         [StringLength(45)]
         public string AuthName { get; set; }
-        public short? AuthValue { get; set; }
+        public short AuthValue { get; set; }
         public bool? IsCreateAnnouce { get; set; }
         public bool? IsUpdateAnnouce { get; set; }
         public bool? IsDeleteAnnouce { get; set; }
