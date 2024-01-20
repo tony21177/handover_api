@@ -37,11 +37,14 @@ namespace handover_api.Models
         public string GroupTitle { get; set; }
         [StringLength(200)]
         public string GroupDescription { get; set; }
-        public int? GroupRank { get; set; }
+        public int GroupRank { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime? CreatedOn { get; set; }
         [StringLength(100)]
         public string CreatorName { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

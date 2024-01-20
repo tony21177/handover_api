@@ -20,24 +20,32 @@ namespace handover_api.Models
         [Key]
         [Column("id")]
         public int Id { get; set; }
+        [Required]
         [StringLength(45)]
         public string Account { get; set; }
         [StringLength(45)]
         public string Password { get; set; }
         [StringLength(45)]
         public string DisplayName { get; set; }
+        [Required]
         [Column("UserID")]
         [StringLength(45)]
         public string UserId { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
         public short AuthValue { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime? CreatedTime { get; set; }
         [Column("PhotoURL")]
         [StringLength(1000)]
         public string PhotoUrl { get; set; }
+        /// <summary>
+        /// 人員獨立代碼
+        /// </summary>
         [Column("UID")]
         [StringLength(100)]
         public string Uid { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

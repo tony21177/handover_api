@@ -1,14 +1,16 @@
-﻿namespace handover_api.Utils
+﻿using handover_api.Models;
+
+namespace handover_api.Utils
 {
-    public class AuthValueAndPermissionSetting
+    public class MemberAndPermissionSetting
     {
-        public AuthValueAndPermissionSetting(short authValue, PermissionSetting? permissionSetting)
+        public MemberAndPermissionSetting(Member member, PermissionSetting permissionSetting)
         {
-            AuthValue = authValue;
+            Member = member;
             PermissionSetting = permissionSetting;
         }
 
-        public short AuthValue { get; set; }
+        public Member Member { get; set; }
         public PermissionSetting PermissionSetting { get; set; }
     }
     public class PermissionSetting
@@ -24,5 +26,5 @@
         public bool IsCheckReport { get; set; }
     }
 
-    
+
 }

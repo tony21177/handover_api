@@ -1,6 +1,5 @@
 ﻿using handover_api.Common;
 using handover_api.Controllers.Request;
-using handover_api.Models;
 using handover_api.Service;
 using handover_api.Utils;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +11,13 @@ namespace handover_api.Controllers
     [Route("api/[controller]")]
     public class LoginController : Controller
     {
-        private readonly JwtHelpers _jwtHelpers;
+        private readonly AuthHelpers _authHelpers;
         private readonly MemberService _memberService;
         private readonly AuthLayerService _authLayerService;
 
-        public LoginController(JwtHelpers jwtHelpers, MemberService memberService, AuthLayerService authLayerService)
+        public LoginController(AuthHelpers authHelpers, MemberService memberService, AuthLayerService authLayerService)
         {
-            _jwtHelpers = jwtHelpers;
+            _authHelpers = authHelpers;
             _memberService = memberService;
             _authLayerService = authLayerService;
         }
@@ -33,42 +32,42 @@ namespace handover_api.Controllers
                 Message = "登入失敗",
                 Data = null
             };
-            var authValueAndPermissionSetting = ValidateUser(loginRequest);
-            if (authValueAndPermissionSetting == null) return BadRequest(result);
+            var memberAndPermissionSetting = ValidateUser(loginRequest);
+            if (memberAndPermissionSetting == null) return BadRequest(result);
 
-            var token = _jwtHelpers.GenerateToken(loginRequest.Account, authValueAndPermissionSetting.AuthValue,authValueAndPermissionSetting.PermissionSetting);
+            var token = _authHelpers.GenerateToken(memberAndPermissionSetting);
             result.Result = true;
             result.Message = "登入成功";
-            result.Data = new Dictionary<string, string> { { "token", token } };
+            result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName } };
             return Ok(result);
-            
-           
+
+
         }
 
-        AuthValueAndPermissionSetting? ValidateUser(LoginRequest loginRequest)
+        MemberAndPermissionSetting? ValidateUser(LoginRequest loginRequest)
         {
             var member = _memberService.GetMemberByAccount(loginRequest.Account);
             if (member == null) return null;
-            if(member.Password != loginRequest.Password) return null;
+            if (member.Password != loginRequest.Password) return null;
 
             var authLayer = _authLayerService.GetByAuthValue(member.AuthValue);
-            if (authLayer == null) return null; 
+            if (authLayer == null) return null;
             PermissionSetting permissionSetting = new PermissionSetting
             {
-                IsCheckReport = authLayer.IsCheckReport??false,
-                IsCreateAnnouce = authLayer.IsCreateAnnouce ?? false,
-                IsDeleteAnnouce = authLayer.IsDeleteAnnouce ?? false,
-                IsCreateHandover = authLayer.IsCreateHandover ?? false,
-                IsDeleteHandover = authLayer.IsDeleteHandover ?? false,
-                IsHideAnnouce = authLayer.IsHideAnnouce ?? false,
-                IsMemberControl = authLayer.IsMemberControl ?? false,
-                IsUpdateAnnouce = authLayer.IsUpdateAnnouce ?? false,
-                IsUpdateHandover = authLayer.IsUpdateHandover ?? false,
+                IsCheckReport = authLayer.IsCheckReport,
+                IsCreateAnnouce = authLayer.IsCreateAnnouce,
+                IsDeleteAnnouce = authLayer.IsDeleteAnnouce,
+                IsCreateHandover = authLayer.IsCreateHandover,
+                IsDeleteHandover = authLayer.IsDeleteHandover,
+                IsHideAnnouce = authLayer.IsHideAnnouce,
+                IsMemberControl = authLayer.IsMemberControl,
+                IsUpdateAnnouce = authLayer.IsUpdateAnnouce,
+                IsUpdateHandover = authLayer.IsUpdateHandover,
             };
 
 
-            return new AuthValueAndPermissionSetting(authLayer.AuthValue, permissionSetting);
-           
+            return new MemberAndPermissionSetting(member, permissionSetting);
+
         }
     }
 }

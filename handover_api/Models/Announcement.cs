@@ -30,6 +30,7 @@ namespace handover_api.Models
         public DateTime? BeginViewTime { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? EndViewTime { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
         [Required]
         [Column("AnnounceID")]
@@ -43,5 +44,9 @@ namespace handover_api.Models
         public string CreatorId { get; set; }
         [StringLength(100)]
         public string CreatorName { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

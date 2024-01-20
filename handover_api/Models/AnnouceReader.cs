@@ -18,6 +18,7 @@ namespace handover_api.Models
         /// <summary>
         /// PK(GUID)
         /// </summary>
+        [Required]
         [Column("ReaderID")]
         [StringLength(100)]
         public string ReaderId { get; set; }
@@ -33,9 +34,14 @@ namespace handover_api.Models
         [Column("UserID")]
         [StringLength(100)]
         public string UserId { get; set; }
-        public bool? IsRead { get; set; }
-        [StringLength(45)]
-        public string ReadTime { get; set; }
+        public bool IsRead { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime? ReadTime { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

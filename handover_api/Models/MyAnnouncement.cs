@@ -29,6 +29,7 @@ namespace handover_api.Models
         public DateTime? BeginViewTime { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? EndViewTime { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
         [Required]
         [Column("AnnounceID")]
@@ -43,7 +44,11 @@ namespace handover_api.Models
         [Column("UserID")]
         [StringLength(100)]
         public string UserId { get; set; }
-        public bool? IsBookToTop { get; set; }
-        public bool? IsRemind { get; set; }
+        public bool IsBookToTop { get; set; }
+        public bool IsRemind { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

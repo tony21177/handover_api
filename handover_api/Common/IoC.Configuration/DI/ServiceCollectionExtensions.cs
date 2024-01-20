@@ -1,5 +1,6 @@
 ﻿using handover_api.Service;
 using handover_api.Utils;
+using Microsoft.AspNetCore.Authorization;
 using System.Reflection;
 
 namespace handover_api.Common.IoC.Configuration.DI
@@ -10,9 +11,14 @@ namespace handover_api.Common.IoC.Configuration.DI
         {
             if (services != null)
             {
+                services.AddSingleton<IConfiguration>(configuration);
                 services.AddScoped<AuthLayerService>();
                 services.AddScoped<MemberService>();
-                services.AddSingleton<JwtHelpers>();
+                services.AddScoped<AuthHelpers>();
+                services.AddScoped<AnnouncementService>();
+                services.AddScoped<FileUploadService>();
+                services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+
             }
         }
 

@@ -35,6 +35,7 @@ namespace handover_api.Models
         /// <summary>
         /// GUID
         /// </summary>
+        [Required]
         [Column("SheetRowID")]
         [StringLength(100)]
         public string SheetRowId { get; set; }
@@ -63,5 +64,9 @@ namespace handover_api.Models
         public string MaintainAnswerType { get; set; }
         [StringLength(1000)]
         public string Remarks { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

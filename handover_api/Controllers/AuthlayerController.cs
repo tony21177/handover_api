@@ -1,12 +1,11 @@
 ﻿using AutoMapper;
+using handover_api.Auth;
 using handover_api.Common;
 using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service;
 using handover_api.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -14,14 +13,13 @@ namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class AuthlayerController : Controller
     {
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthlayerController> _logger;
-        private readonly JwtHelpers _jwtHelpers;
-        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger, JwtHelpers jwtHelpers)
+        private readonly AuthHelpers _jwtHelpers;
+        public AuthlayerController(AuthLayerService authLayerService, IMapper mapper, ILogger<AuthlayerController> logger, AuthHelpers jwtHelpers)
         {
             _authLayerService = authLayerService;
             _mapper = mapper;
@@ -30,18 +28,22 @@ namespace handover_api.Controllers
         }
 
         [HttpGet("list")]
+        //[Authorize(Roles = "1")]
+        [AuthorizeRoles("1")]
         public IActionResult List()
         {
-            var authValueAndPermissionSetting = _jwtHelpers.GetPermissionSetting(User);
-            if (authValueAndPermissionSetting == null|| authValueAndPermissionSetting.AuthValue!=(short)1)
-            {
-                return Unauthorized(new CommonResponse<List<Authlayer>>()
-                {
-                    Result = false,
-                    Message = "沒有權限",
-                    Data = null
-                });
-            }
+            // 以下這段不需要===>[Authorize(Roles = "1")]搭配CustomAuthorizationMiddlewareResultHandler即可
+
+            //var authValueAndPermissionSetting = _jwtHelpers.GetMemberAndPermissionSetting(User);
+            //if (authValueAndPermissionSetting == null || authValueAndPermissionSetting.Member.AuthValue != (short)1)
+            //{
+            //    return Unauthorized(new CommonResponse<List<Authlayer>>()
+            //    {
+            //        Result = false,
+            //        Message = "沒有權限",
+            //        Data = null
+            //    });
+            //}
 
             var data = _authLayerService.GetAllAuthlayers();
             var response = new CommonResponse<List<Authlayer>>()
@@ -54,6 +56,7 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("update")]
+        [AuthorizeRoles("1")]
         public CommonResponse<List<Authlayer>> Update(List<UpdateAuthlayerRequest> updateAuthlayerListRequest)
         {
             var authlayerList = _mapper.Map<List<Authlayer>>(updateAuthlayerListRequest);
@@ -69,6 +72,7 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("create")]
+        [AuthorizeRoles("1")]
         public CommonResponse<Authlayer> Create(CreateAuthlayerRequest createAuthlayerRequest)
         {
             var newAuthLayer = _mapper.Map<Authlayer>(createAuthlayerRequest);
@@ -85,6 +89,7 @@ namespace handover_api.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [AuthorizeRoles("1")]
         public IActionResult Delete(int id)
         {
 

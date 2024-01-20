@@ -6,5 +6,13 @@
         public string Message { get; set; } = "";
 
         public T? Data { get; set; }
+        public static CommonResponse<dynamic> BuildNotAuthorizeResponse()
+        {
+            return new CommonResponse<dynamic>
+            {
+                Result = false,
+                Message = "沒有權限",
+            };
+        }
     }
 }

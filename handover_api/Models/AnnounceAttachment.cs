@@ -19,13 +19,14 @@ namespace handover_api.Models
         [Key]
         [Column("id")]
         public int Id { get; set; }
+        [Required]
         [Column("AttID")]
         [StringLength(100)]
         public string AttId { get; set; }
         /// <summary>
         /// 上傳檔案的順序
         /// </summary>
-        public int? Index { get; set; }
+        public int Index { get; set; }
         [StringLength(45)]
         public string FileName { get; set; }
         [StringLength(200)]
@@ -35,8 +36,7 @@ namespace handover_api.Models
         [StringLength(45)]
         public string FileSizeText { get; set; }
         public double? FileSizeNumber { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime? CreatedTime { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
         /// <summary>
         /// announcement.AnnounceID
@@ -44,12 +44,16 @@ namespace handover_api.Models
         /// </summary>
         [Column("AnnounceID")]
         [StringLength(100)]
-        public string AnnounceId { get; set; }
+        public string? AnnounceId { get; set; }
         /// <summary>
         /// member.UserID
         /// </summary>
         [Column("CreatorID")]
         [StringLength(45)]
-        public string CreatorId { get; set; }
+        public string? CreatorId { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime UpdatedTime { get; set; }
     }
 }

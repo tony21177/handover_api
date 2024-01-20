@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FluentValidation;
+using handover_api.Auth;
 using handover_api.Common;
 using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
@@ -32,6 +33,7 @@ namespace handover_api.Controllers
         }
 
         [HttpGet("list")]
+        [AuthorizeRoles("1", "3", "5")]
         public CommonResponse<List<MemberDto>> List()
         {
             var data = _memberService.GetAllMembers();
@@ -46,6 +48,7 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("create")]
+        [AuthorizeRoles("1", "3", "5")]
         public async Task<IActionResult> Create(CreateOrUpdateMemberRequest createMemberRequset)
         {
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
@@ -74,6 +77,7 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("update")]
+        [AuthorizeRoles("1", "3", "5")]
         public async Task<IActionResult> Update(CreateOrUpdateMemberRequest updateMemberRequset)
         {
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
@@ -100,6 +104,7 @@ namespace handover_api.Controllers
         }
 
         [HttpDelete("delete/{userId}")]
+        [AuthorizeRoles("1", "3", "5")]
         public IActionResult Delete(string userId)
         {
 

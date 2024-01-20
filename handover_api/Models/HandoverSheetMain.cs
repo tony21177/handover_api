@@ -18,6 +18,7 @@ namespace handover_api.Models
         [Key]
         [Column("id")]
         public int Id { get; set; }
+        [Required]
         [Column("SheetID")]
         [StringLength(100)]
         public string SheetId { get; set; }
@@ -28,9 +29,10 @@ namespace handover_api.Models
         [StringLength(2000)]
         public string Image { get; set; }
         [Column(TypeName = "timestamp")]
-        public DateTime? CreatedOn { get; set; }
+        public DateTime UpdatedTime { get; set; }
         [Column(TypeName = "timestamp")]
         public DateTime? ModifiedOn { get; set; }
+        [Required]
         public bool? IsActive { get; set; }
         [StringLength(45)]
         public string Version { get; set; }
@@ -38,5 +40,7 @@ namespace handover_api.Models
         public string SerialCode { get; set; }
         [StringLength(100)]
         public string CreatorName { get; set; }
+        [Column(TypeName = "timestamp")]
+        public DateTime CreatedTime { get; set; }
     }
 }
