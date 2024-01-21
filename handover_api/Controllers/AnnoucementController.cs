@@ -2,18 +2,21 @@
 using FluentValidation;
 using handover_api.Auth;
 using handover_api.Common;
+using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
 using handover_api.Service;
 using handover_api.Utils;
 using MaiBackend.PublicApi.Consts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AnnoucementController : Controller
     {
         private readonly AuthHelpers _authHelpers;
@@ -21,8 +24,9 @@ namespace handover_api.Controllers
         private readonly AnnouncementService _announcementService;
         private readonly IMapper _mapper;
         private readonly ILogger<AnnoucementController> _logger;
-        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _createAnnoucementRequest;
-        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _updateAnnoucementRequest;
+        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _createAnnoucementRequestValidator;
+        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _updateAnnoucementRequestValidator;
+        private readonly IValidator<ListAnnoucementRequest> _listAnnoucementRequestValidator;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly FileUploadService _fileUploadService;
 
@@ -33,14 +37,15 @@ namespace handover_api.Controllers
             _announcementService = announcementService;
             _mapper = mapper;
             _logger = logger;
-            _createAnnoucementRequest = new CreateOrUpdateAnnouncementValidator(ActionTypeEnum.Create, memberService);
-            _updateAnnoucementRequest = new CreateOrUpdateAnnouncementValidator(ActionTypeEnum.Create, memberService);
+            _createAnnoucementRequestValidator = new CreateOrUpdateAnnouncementValidator(ActionTypeEnum.Create, memberService);
+            _updateAnnoucementRequestValidator = new CreateOrUpdateAnnouncementValidator(ActionTypeEnum.Create, memberService);
+            _listAnnoucementRequestValidator = new ListAnnouncementRequestValidator();
             _webHostEnvironment = webHostEnvironment;
             _fileUploadService = fileUploadService;
         }
 
         [HttpPost("create")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public IActionResult Create(CreateOrUpdateAnnoucementRequest createAnnoucementRequest)
         {
             var response = new CommonResponse<Announcement>
@@ -59,7 +64,7 @@ namespace handover_api.Controllers
             }
 
             // 參數驗證
-            var validationResult = _createAnnoucementRequest.Validate(createAnnoucementRequest);
+            var validationResult = _createAnnoucementRequestValidator.Validate(createAnnoucementRequest);
             if (!validationResult.IsValid)
             {
                 // 從 FluentValidation 的 ValidationResult 中獲取錯誤信息
@@ -82,6 +87,68 @@ namespace handover_api.Controllers
             response.Data = newAnnouncement;
 
             return Ok(response);
+        }
+
+        [HttpPost("list")]
+        [Authorize]
+        public IActionResult ListAnnouncements(ListAnnoucementRequest listAnnoucementRequest)
+        {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            // 參數驗證
+            var validationResult = _listAnnoucementRequestValidator.Validate(listAnnoucementRequest);
+            if (!validationResult.IsValid)
+            {
+                // 從 FluentValidation 的 ValidationResult 中獲取錯誤信息
+                var errorMessage = validationResult.Errors.FirstOrDefault()?.ErrorMessage;
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = errorMessage ?? "參數錯誤"
+                });
+            }
+
+
+            var announcements = _announcementService.GetFilteredAnnouncements(listAnnoucementRequest);
+            // Extract unique AnnounceIds from the announcements
+            var uniqueAnnounceIds = announcements.Select(a => a.AnnounceId).Distinct().ToList();
+
+            // Retrieve attachments based on the unique AnnounceIds
+            var attachments = _announcementService.GetAttachmentsByAnnounceIds(uniqueAnnounceIds);
+            // Map attachments to corresponding announcements
+            var result = announcements.Select(announcement =>
+            {
+                var announceAttachments = attachments
+                    .Where(a => a.AnnounceId == announcement.AnnounceId)
+                    .ToList();
+
+                return new AnnouncementWithAttachments
+                {
+                    Id = announcement.Id,
+                    Title = announcement.Title,
+                    Content = announcement.Content,
+                    BeginPublishTime = announcement.BeginPublishTime,
+                    EndPublishTime = announcement.EndPublishTime,
+                    BeginViewTime = announcement.BeginViewTime,
+                    EndViewTime = announcement.EndViewTime,
+                    IsActive = announcement.IsActive ?? false,
+                    AnnounceId = announcement.AnnounceId,
+                    CreatorId = announcement.CreatorId,
+                    CreatorName = announcement.CreatorName,
+                    CreatedTime = announcement.CreatedTime,
+                    UpdatedTime = announcement.UpdatedTime,
+                    AnnounceAttachments = announceAttachments
+                };
+            }).ToList();
+
+            return Ok(new CommonResponse<List<AnnouncementWithAttachments>>
+            {
+                Result = true,
+                Data = result
+            });
         }
 
 

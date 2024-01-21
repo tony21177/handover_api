@@ -1,4 +1,5 @@
-﻿using handover_api.Models;
+﻿using handover_api.Controllers.Request;
+using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
 using System.Transactions;
@@ -26,43 +27,70 @@ namespace handover_api.Service
             return _dbContext.Announcements.Where(annoucement => annoucement.AnnounceId == annoucementId).FirstOrDefault();
         }
 
-        public List<AnnouncementWithAttachmentViewModel> GetAllAnnouncementsWithAttachments()
+        public List<Announcement> GetFilteredAnnouncements(ListAnnoucementRequest request)
         {
-            var query = from announcement in _dbContext.Announcements
-                        join attachment in _dbContext.AnnounceAttachments on announcement.AnnounceId equals attachment.AnnounceId
-                        select new AnnouncementWithAttachmentViewModel
-                        {
-                            // Announcement 屬性
-                            Id = announcement.Id,
-                            Title = announcement.Title,
-                            Content = announcement.Content,
-                            BeginPublishTime = announcement.BeginPublishTime,
-                            EndPublishTime = announcement.EndPublishTime,
-                            BeginViewTime = announcement.BeginViewTime,
-                            EndViewTime = announcement.EndViewTime,
-                            IsActive = announcement.IsActive,
-                            AnnounceId = announcement.AnnounceId,
-                            CreatorId = announcement.CreatorId,
-                            CreatorName = announcement.CreatorName,
-                            CreatedTime = announcement.CreatedTime,
-                            UpdatedTime = announcement.UpdatedTime,
+            var query = _dbContext.Announcements.AsQueryable();
 
-                            // AnnounceAttachment 屬性
-                            AttId = attachment.AttId,
-                            Index = attachment.Index,
-                            FileName = attachment.FileName,
-                            FilePath = attachment.FilePath,
-                            FileType = attachment.FileType,
-                            FileSizeText = attachment.FileSizeText,
-                            FileSizeNumber = attachment.FileSizeNumber,
-                            AttachmentCreatedTime = attachment.CreatedTime,
-                            AttachmentUpdatedTime = attachment.UpdatedTime,
-                            AttachmentIsActive = attachment.IsActive,
-                            AttachmentCreatorId = attachment.CreatorId,
-                        };
+            // Apply filters based on the request parameters
+            if (!string.IsNullOrEmpty(request.CreatorID))
+                query = query.Where(a => a.CreatorId == request.CreatorID);
 
-            List<AnnouncementWithAttachmentViewModel> result = query.ToList();
-            return result;
+            if (request.IsActive.HasValue)
+                query = query.Where(a => a.IsActive == request.IsActive);
+
+            if (!string.IsNullOrEmpty(request.Title))
+                query = query.Where(a => a.Title.Contains(request.Title));
+
+            if (!string.IsNullOrEmpty(request.Content))
+                query = query.Where(a => a.Content.Contains(request.Content));
+            // Ordering
+            switch (request.OrderBy)
+            {
+                case "Title":
+                    query = request.IsAsc ? query.OrderBy(a => a.Title) : query.OrderByDescending(a => a.Title);
+                    break;
+                case "Content":
+                    query = request.IsAsc ? query.OrderBy(a => a.Content) : query.OrderByDescending(a => a.Content);
+                    break;
+                case "BeginPublishTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.BeginPublishTime) : query.OrderByDescending(a => a.BeginPublishTime);
+                    break;
+                case "EndPublishTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.EndPublishTime) : query.OrderByDescending(a => a.EndPublishTime);
+                    break;
+                case "BeginViewTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.BeginViewTime) : query.OrderByDescending(a => a.BeginViewTime);
+                    break;
+                case "EndViewTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.EndViewTime) : query.OrderByDescending(a => a.EndViewTime);
+                    break;
+                case "CreatedTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.CreatedTime) : query.OrderByDescending(a => a.CreatedTime);
+                    break;
+                case "UpdatedTime":
+                    query = request.IsAsc ? query.OrderBy(a => a.UpdatedTime) : query.OrderByDescending(a => a.UpdatedTime);
+                    break;
+                default:
+                    // Default ordering by Id
+                    query = request.IsAsc ? query.OrderBy(a => a.Id) : query.OrderByDescending(a => a.Id);
+                    break;
+            }
+
+            // Pagination
+            if (request.IsPagination && request.PageIndex.HasValue && request.PageSize.HasValue)
+                query = query.Skip((request.PageIndex.Value - 1) * request.PageSize.Value).Take(request.PageSize.Value);
+
+            return query.ToList();
+        }
+
+        public List<AnnounceAttachment> GetAttachmentsByAnnounceIds(List<string> inAnnounceIds)
+        {
+            var query = _dbContext.AnnounceAttachments.AsQueryable();
+
+            // Apply filter based on the list of AnnounceIds
+            query = query.Where(a => inAnnounceIds.Contains(a.AnnounceId));
+
+            return query.ToList();
         }
 
         public Announcement? CreateAnnouncement(Announcement announcement, List<string> readerUserIdList, Member creator, List<string> attIdList)
@@ -128,6 +156,8 @@ namespace handover_api.Service
             }
 
             // 返回新創建的 Announcement 實例
+
+
             return announcement;
         }
 
