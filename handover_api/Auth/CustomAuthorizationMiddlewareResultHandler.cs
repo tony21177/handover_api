@@ -8,7 +8,7 @@ public class CustomAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewa
 
     public Task HandleAsync(RequestDelegate next, HttpContext context, AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
     {
-        if (authorizeResult.Forbidden)
+        if (authorizeResult.Forbidden || authorizeResult.Challenged)
         {
             var response = new ObjectResult(new CommonResponse<dynamic>
             {

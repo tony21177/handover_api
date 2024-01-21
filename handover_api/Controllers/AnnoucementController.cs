@@ -93,10 +93,10 @@ namespace handover_api.Controllers
         [Authorize]
         public IActionResult ListAnnouncements(ListAnnoucementRequest listAnnoucementRequest)
         {
-            if (User.Identity == null || !User.Identity.IsAuthenticated)
-            {
-                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
-            }
+            //if (User.Identity == null || !User.Identity.IsAuthenticated)
+            //{
+            //    return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            //}
 
             // 參數驗證
             var validationResult = _listAnnoucementRequestValidator.Validate(listAnnoucementRequest);
