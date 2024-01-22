@@ -17,6 +17,7 @@ namespace MaiBackend.Common.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateOrUpdateMemberRequest, Member>()
             //.ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => string.Join(",", src.PhotoUrls)))
+            .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.PhotoUrls))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<Member, MemberDto>()
             //.ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
