@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using handover_api.Models;
+using handover_api.Service.ValueObject;
 
 namespace handover_api.Service
 {
@@ -38,6 +39,24 @@ namespace handover_api.Service
         public List<Member> GetAllMembers()
         {
             return _dbContext.Members.ToList();
+        }
+
+        public List<Recipient> GetAlRecipients()
+        {
+            var result = from member in _dbContext.Members
+                         join authLayer in _dbContext.Authlayers
+                         on member.AuthValue equals authLayer.AuthValue
+                         select new Recipient
+                         {
+                             UserId = member.UserId,
+                             DisplayName = member.DisplayName,
+                             Account = member.Account,
+                             AuthValue = member.AuthValue,
+                             AuthName = authLayer.AuthName,
+                             AuthDescription = authLayer.AuthDescription
+                         };
+
+            return result.ToList();
         }
 
         public Member? UpdateMember(Member member)

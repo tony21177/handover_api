@@ -7,7 +7,10 @@ using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
 using handover_api.Service;
+using handover_api.Service.ValueObject;
+using handover_api.Utils;
 using MaiBackend.PublicApi.Consts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace handover_api.Controllers
@@ -22,7 +25,8 @@ namespace handover_api.Controllers
         private readonly ILogger<MemberController> _logger;
         private readonly IValidator<CreateOrUpdateMemberRequest> _createMemberRequestValidator;
         private readonly IValidator<CreateOrUpdateMemberRequest> _updateMemberRequestValidator;
-        public MemberController(MemberService memberService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger)
+        private readonly AuthHelpers _authHelpers;
+        public MemberController(MemberService memberService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger,AuthHelpers authHelpers)
         {
             _memberService = memberService;
             _authLayerService = authLayerService;
@@ -30,6 +34,7 @@ namespace handover_api.Controllers
             _logger = logger;
             _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService);
             _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService);
+            _authHelpers = authHelpers;
         }
 
         [HttpGet("list")]
@@ -45,6 +50,29 @@ namespace handover_api.Controllers
                 Data = memberDtos
             };
             return response;
+        }
+
+        [HttpGet("recipients")]
+        [Authorize]
+        public IActionResult ListRecipients()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsCreateAnnouce)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var data = _memberService.GetAlRecipients();
+           
+            var response = new CommonResponse<List<Recipient>>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return Ok(response);
         }
 
         [HttpPost("create")]

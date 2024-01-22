@@ -38,7 +38,7 @@ namespace handover_api.Controllers
             var token = _authHelpers.GenerateToken(memberAndPermissionSetting);
             result.Result = true;
             result.Message = "登入成功";
-            result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName } };
+            result.Data = new Dictionary<string, string> { { "token", token }, { "displayName", memberAndPermissionSetting.Member.DisplayName },{ "userId", memberAndPermissionSetting.Member.UserId } };
             return Ok(result);
 
 
