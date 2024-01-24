@@ -18,5 +18,7 @@ namespace handover_api.Controllers.Dto
         public DateTime CreatedTime { get; set; }
         public DateTime UpdatedTime { get; set; }
         public List<AnnounceAttachment> AnnounceAttachments { get; set; } = new List<AnnounceAttachment>();
+
+        public bool IsRead { get; set; } 
     }
 }

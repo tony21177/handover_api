@@ -89,6 +89,18 @@ namespace handover_api.Controllers
             return Ok(response);
         }
 
+        [HttpDelete("attachment/{attid}")]
+        [AuthorizeRoles("1","3","5")]
+        public IActionResult DeleteAnnouceAttachment(string attid)
+        {
+            _announcementService.DeleteAttachmentByAttIds(new List<string> { attid});
+            return Ok(new CommonResponse<dynamic>()
+            {
+                Result = true,
+            });
+        }
+
+
         [HttpPost("list")]
         [Authorize]
         public IActionResult ListAnnouncements(ListAnnoucementRequest listAnnoucementRequest)
@@ -97,6 +109,9 @@ namespace handover_api.Controllers
             //{
             //    return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             //}
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+
 
             // 參數驗證
             var validationResult = _listAnnoucementRequestValidator.Validate(listAnnoucementRequest);
@@ -118,12 +133,15 @@ namespace handover_api.Controllers
 
             // Retrieve attachments based on the unique AnnounceIds
             var attachments = _announcementService.GetAttachmentsByAnnounceIds(uniqueAnnounceIds);
+
+            var announceReaderList = _announcementService.GetAnnouceReadersByUserIds(new List<string> { userId });
             // Map attachments to corresponding announcements
             var result = announcements.Select(announcement =>
             {
                 var announceAttachments = attachments
                     .Where(a => a.AnnounceId == announcement.AnnounceId)
                     .ToList();
+                var matchedAnnouce = announceReaderList.Find(announceReader => announcement.AnnounceId == announceReader.AnnounceId);
 
                 return new AnnouncementWithAttachments
                 {
@@ -140,7 +158,8 @@ namespace handover_api.Controllers
                     CreatorName = announcement.CreatorName,
                     CreatedTime = announcement.CreatedTime,
                     UpdatedTime = announcement.UpdatedTime,
-                    AnnounceAttachments = announceAttachments
+                    AnnounceAttachments = announceAttachments,
+                    IsRead = matchedAnnouce==null || matchedAnnouce.IsRead, // 表示此篇對於查詢者(現在登入的member)是否為已讀或未讀,若不在在收件人中給true
                 };
             }).ToList();
 

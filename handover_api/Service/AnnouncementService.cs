@@ -93,6 +93,12 @@ namespace handover_api.Service
             return query.ToList();
         }
 
+        public void DeleteAttachmentByAttIds(List<string> attIdList)
+        {
+            _dbContext.AnnounceAttachments.Where(attachment=>attIdList.Contains(attachment.AttId)).ExecuteDelete();
+            return;
+        }
+
         public Announcement? CreateAnnouncement(Announcement announcement, List<string> readerUserIdList, Member creator, List<string> attIdList)
         {
             using (var scope = new TransactionScope())
@@ -199,6 +205,15 @@ namespace handover_api.Service
             }
 
             return _dbContext.AnnounceAttachments.Where(attachment => attIdList.Contains(attachment.AttId)).ToList();
+        }
+
+        public List<AnnouceReader> GetAnnouceReadersByUserIds(List<string> userIds)
+        {
+            if (userIds.Count == 0)
+            {
+                return new List<AnnouceReader>();
+            }
+            return _dbContext.AnnouceReaders.Where(annouceReader=> userIds.Contains(annouceReader.UserId)).ToList();
         }
 
         public void UpdateAnnounceAttachments(List<string> attIds, string annoucementId, string creatorId)

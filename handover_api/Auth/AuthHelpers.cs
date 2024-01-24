@@ -20,7 +20,7 @@ namespace handover_api.Utils
             _logger = logger;
         }
 
-        public string GenerateToken(MemberAndPermissionSetting memberAndPermissionSetting, int expireMinutes = 30)
+        public string GenerateToken(MemberAndPermissionSetting memberAndPermissionSetting, int expireMinutes = 43200)
         {
             var issuer = Configuration.GetValue<string>("JwtSettings:Issuer");
             var signKey = Configuration.GetValue<string>("JwtSettings:SignKey");
@@ -47,6 +47,7 @@ namespace handover_api.Utils
             claims.Add(new Claim(ClaimTypes.Role, memberAndPermissionSetting.Member.AuthValue.ToString()));
             claims.Add(new Claim("account", memberAndPermissionSetting.Member.Account));
             claims.Add(new Claim("permissions", JsonSerializer.Serialize(memberAndPermissionSetting.PermissionSetting)));
+            claims.Add(new Claim("member", JsonSerializer.Serialize(memberAndPermissionSetting.Member)));
 
             var userClaimsIdentity = new ClaimsIdentity(claims);
 
