@@ -24,8 +24,8 @@ namespace handover_api.Controllers
         private readonly AnnouncementService _announcementService;
         private readonly IMapper _mapper;
         private readonly ILogger<AnnoucementController> _logger;
-        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _createAnnoucementRequestValidator;
-        private readonly IValidator<CreateOrUpdateAnnoucementRequest> _updateAnnoucementRequestValidator;
+        private readonly IValidator<CreateAnnoucementRequest> _createAnnoucementRequestValidator;
+        private readonly IValidator<CreateAnnoucementRequest> _updateAnnoucementRequestValidator;
         private readonly IValidator<ListAnnoucementRequest> _listAnnoucementRequestValidator;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly FileUploadService _fileUploadService;
@@ -46,7 +46,7 @@ namespace handover_api.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public IActionResult Create(CreateOrUpdateAnnoucementRequest createAnnoucementRequest)
+        public IActionResult Create(CreateAnnoucementRequest createAnnoucementRequest)
         {
             var response = new CommonResponse<Announcement>
             {
@@ -90,10 +90,10 @@ namespace handover_api.Controllers
         }
 
         [HttpDelete("attachment/{attid}")]
-        [AuthorizeRoles("1","3","5")]
+        [AuthorizeRoles("1", "3", "5")]
         public IActionResult DeleteAnnouceAttachment(string attid)
         {
-            _announcementService.DeleteAttachmentByAttIds(new List<string> { attid});
+            _announcementService.DeleteAttachmentByAttIds(new List<string> { attid });
             return Ok(new CommonResponse<dynamic>()
             {
                 Result = true,
@@ -159,7 +159,7 @@ namespace handover_api.Controllers
                     CreatedTime = announcement.CreatedTime,
                     UpdatedTime = announcement.UpdatedTime,
                     AnnounceAttachments = announceAttachments,
-                    IsRead = matchedAnnouce==null || matchedAnnouce.IsRead, // 表示此篇對於查詢者(現在登入的member)是否為已讀或未讀,若不在在收件人中給true
+                    IsRead = matchedAnnouce == null || matchedAnnouce.IsRead, // 表示此篇對於查詢者(現在登入的member)是否為已讀或未讀,若不在在收件人中給true
                 };
             }).ToList();
 
@@ -167,6 +167,119 @@ namespace handover_api.Controllers
             {
                 Result = true,
                 Data = result
+            });
+        }
+
+        [HttpGet("detail/{announceId}")]
+        [Authorize]
+        public IActionResult GetAnnouncementDetail(string announceId)
+        {
+            //if (User.Identity == null || !User.Identity.IsAuthenticated)
+            //{
+            //    return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            //}
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+
+
+            var announcement = _announcementService.GetAnnouncementByAnnounceId(announceId);
+            if (announcement == null)
+            {
+                return Ok(new CommonResponse<AnnouncementWithAttachments>
+                {
+                    Result = true
+                });
+            }
+
+            // Retrieve attachments based on the unique AnnounceIds
+            var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
+
+            var announceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
+            var matchedAnnouceReader = announceReaders.Where(announceReader => announceReader.UserId == userId).FirstOrDefault();
+            var isRead = (matchedAnnouceReader != null ? matchedAnnouceReader.IsRead : true);
+
+            var result = new AnnouncementWithAttachments
+            {
+                Id = announcement.Id,
+                Title = announcement.Title,
+                Content = announcement.Content,
+                BeginPublishTime = announcement.BeginPublishTime,
+                EndPublishTime = announcement.EndPublishTime,
+                BeginViewTime = announcement.BeginViewTime,
+                EndViewTime = announcement.EndViewTime,
+                IsActive = announcement.IsActive ?? false,
+                AnnounceId = announcement.AnnounceId,
+                CreatorId = announcement.CreatorId,
+                CreatorName = announcement.CreatorName,
+                CreatedTime = announcement.CreatedTime,
+                UpdatedTime = announcement.UpdatedTime,
+                AnnounceAttachments = attachments,
+                IsRead = isRead, // 表示此篇對於查詢者(現在登入的member)是否為已讀或未讀,若不在在收件人中給true
+            };
+            return Ok(new CommonResponse<AnnouncementWithAttachments>
+            {
+                Result = true,
+                Data = result
+            });
+        }
+
+        [HttpPost("update/{announceId}")]
+        [Authorize]
+        public IActionResult UpdateAnnouncement(UpdateAnnouncementRequest updateAnnouncementRequest, [FromRoute] string announceId)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+            if (!loginMemberAndPermission.PermissionSetting.IsUpdateAnnouce)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var originalAnnouncement = _announcementService.GetAnnouncementByAnnounceId(announceId);
+            if (originalAnnouncement == null)
+            {
+                return BadRequest(new CommonResponse<AnnouncementWithAttachments>
+                {
+                    Result = false,
+                    Message = "此公告不存在"
+                });
+            }
+            var announceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
+            var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
+            var myAnnouncements = _announcementService.GetMyAnnouncements(announceId);
+            var newAnnouncement = _mapper.Map<Announcement>(updateAnnouncementRequest);
+            var result = _announcementService.UpdateAnnouncement(announceId, newAnnouncement, originalAnnouncement, announceReaders, updateAnnouncementRequest, attachments, myAnnouncements);
+            if (result == false)
+            {
+                return StatusCode(500, new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "內部錯誤"
+                });
+            }
+
+            attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
+
+            //var result = new AnnouncementWithAttachments
+            //{
+            //    Id = announcement.Id,
+            //    Title = announcement.Title,
+            //    Content = announcement.Content,
+            //    BeginPublishTime = announcement.BeginPublishTime,
+            //    EndPublishTime = announcement.EndPublishTime,
+            //    BeginViewTime = announcement.BeginViewTime,
+            //    EndViewTime = announcement.EndViewTime,
+            //    IsActive = announcement.IsActive ?? false,
+            //    AnnounceId = announcement.AnnounceId,
+            //    CreatorId = announcement.CreatorId,
+            //    CreatorName = announcement.CreatorName,
+            //    CreatedTime = announcement.CreatedTime,
+            //    UpdatedTime = announcement.UpdatedTime,
+            //    AnnounceAttachments = attachments,
+            //};
+            return Ok(new CommonResponse<AnnouncementWithAttachments>
+            {
+                Result = true,
+                Data = null
             });
         }
 

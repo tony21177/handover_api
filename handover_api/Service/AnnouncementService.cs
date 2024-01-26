@@ -95,7 +95,7 @@ namespace handover_api.Service
 
         public void DeleteAttachmentByAttIds(List<string> attIdList)
         {
-            _dbContext.AnnounceAttachments.Where(attachment=>attIdList.Contains(attachment.AttId)).ExecuteDelete();
+            _dbContext.AnnounceAttachments.Where(attachment => attIdList.Contains(attachment.AttId)).ExecuteDelete();
             return;
         }
 
@@ -167,6 +167,99 @@ namespace handover_api.Service
             return announcement;
         }
 
+        public bool UpdateAnnouncement(string announceId, Announcement newAnnouncement, Announcement originalAnnouncement, List<AnnouceReader> annouceReaders, UpdateAnnouncementRequest updateAnnouncementRequest, List<AnnounceAttachment> announceAttachments, List<MyAnnouncement> myAnnouncements)
+        {
+            using (var scope = new TransactionScope())
+            {
+                try
+                {
+                    UpdateAnnouncementByAnnounceId(newAnnouncement, announceId);
+                    if (updateAnnouncementRequest.ReaderUserIdList != null)
+                    {
+                        List<string> originalUserIdsInReaders = annouceReaders.Select(x => x.UserId).ToList();
+                        List<string> newUserIdsInReaders = updateAnnouncementRequest.ReaderUserIdList;
+
+                        List<string> userIdsOnlyInOriginalInReaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
+                        List<string> userIdsOnlyInNewInReaders = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
+
+                        List<string> originalUserIdsInMyAnnoucements = myAnnouncements.Select(x => x.UserId).ToList();
+                        List<string> newUserIdsInMyAnnoucements = updateAnnouncementRequest.ReaderUserIdList;
+
+                        List<string> userIdsOnlyInOriginalInMyAnnoucementsaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
+                        List<string> userIdsOnlyInNewInMyAnnoucementss = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
+
+
+                        //_dbContext.AnnouceReaders.Where(annouceReader => userIdsOnlyInOriginalInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
+                        //_dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
+
+                        _dbContext.AnnouceReaders.Where(annouceReader => originalUserIdsInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
+                        _dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
+                        newUserIdsInReaders.ForEach(
+                        userId =>
+                        {
+                            var newAnnouceReader = new AnnouceReader
+                            {
+                                ReaderId = Guid.NewGuid().ToString(),
+                                AnnounceId = announceId,
+                                UserId = userId, //收件人
+                                IsRead = false,
+                                IsActive = true,
+                            };
+                            _dbContext.AnnouceReaders.Add(newAnnouceReader);
+                            var myAnnouncemnet = new MyAnnouncement
+                            {
+                                Title = newAnnouncement.Title != null ? newAnnouncement.Title : originalAnnouncement.Title,
+                                Content = newAnnouncement.Content != null ? newAnnouncement.Content : originalAnnouncement.Content,
+                                BeginPublishTime = newAnnouncement.BeginPublishTime != null ? newAnnouncement.BeginPublishTime : originalAnnouncement.BeginPublishTime,
+                                EndPublishTime = newAnnouncement.EndPublishTime != null ? newAnnouncement.EndPublishTime : originalAnnouncement.EndPublishTime,
+                                BeginViewTime = newAnnouncement.BeginViewTime != null ? newAnnouncement.BeginViewTime : originalAnnouncement.BeginViewTime,
+                                EndViewTime = newAnnouncement.EndViewTime != null ? newAnnouncement.EndViewTime : originalAnnouncement.EndViewTime,
+                                IsActive = newAnnouncement.IsActive != null ? newAnnouncement.IsActive : originalAnnouncement.IsActive,
+                                AnnounceId = announceId,
+                                CreatorId = originalAnnouncement.CreatorId,
+                                UserId = userId, //收件人
+                                IsBookToTop = false,
+                                IsRemind = false,
+                            };
+                            _dbContext.MyAnnouncements.Add(myAnnouncemnet);
+                        });
+                    }
+                    if (updateAnnouncementRequest.AttIdList != null)
+                    {
+                        //UpdateAnnounceAttachments(updateAnnouncementRequest.AttIdList, announcement.AnnounceId, announcement.CreatorId);
+                        var originalAttachAttIds = announceAttachments.Select(attachment => attachment.AttId).ToList();
+                        var newAttIds = updateAnnouncementRequest.AttIdList;
+                        List<string> attIdsOnlyInOriginal = originalAttachAttIds.Except(newAttIds).ToList();
+                        List<string> attIdsOnlyInNew = newAttIds.Except(originalAttachAttIds).ToList();
+                        if (attIdsOnlyInOriginal.Count > 0)
+                        {
+                            UpdateAnnounIdToNullForAnnounceAttachment(attIdsOnlyInOriginal);
+                        }
+                        if (attIdsOnlyInNew.Count > 0)
+                        {
+                            UpdateAnnounceAttachments(attIdsOnlyInNew, announceId, originalAnnouncement.CreatorId);
+                        }
+
+                    }
+
+                    // 保存更改到資料庫
+                    _dbContext.SaveChanges();
+
+                    // 提交事務
+                    scope.Complete();
+                }
+                catch (Exception ex)
+                {
+                    // 處理事務失敗的例外
+                    // 這裡可以根據實際需求進行錯誤處理
+                    _logger.LogError("事務失敗：{msg}", ex.Message);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
 
         public List<AnnounceAttachment> AnnounceAttachments(List<FileDetail> fileDetails)
         {
@@ -213,7 +306,16 @@ namespace handover_api.Service
             {
                 return new List<AnnouceReader>();
             }
-            return _dbContext.AnnouceReaders.Where(annouceReader=> userIds.Contains(annouceReader.UserId)).ToList();
+            return _dbContext.AnnouceReaders.Where(annouceReader => userIds.Contains(annouceReader.UserId)).ToList();
+        }
+        public List<AnnouceReader> GetAnnouceReaderByAnnouncementId(string announceId)
+        {
+            return _dbContext.AnnouceReaders.Where(annouceReader => annouceReader.AnnounceId == announceId).ToList();
+        }
+
+        public List<MyAnnouncement> GetMyAnnouncements(string announceId)
+        {
+            return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ToList();
         }
 
         public void UpdateAnnounceAttachments(List<string> attIds, string annoucementId, string creatorId)
@@ -227,5 +329,38 @@ namespace handover_api.Service
             // Execute the raw SQL update statement
             _dbContext.Database.ExecuteSqlRaw(updateSql);
         }
+
+        public void UpdateAnnounIdToNullForAnnounceAttachment(List<string> attIds)
+        {
+            // Construct the SQL UPDATE statement
+            var updateSql = $@"
+            UPDATE announce_attachment
+            SET AnnounceId = NULL, CreatorId = NULL
+            WHERE AttId IN ({string.Join(",", attIds.Select(id => $"'{id}'"))})";
+
+            // Execute the raw SQL update statement
+            _dbContext.Database.ExecuteSqlRaw(updateSql);
+        }
+
+        public void UpdateAnnouncementByAnnounceId(Announcement updateAnnouncement, string announceId)
+        {
+            // Construct the SQL UPDATE statement
+            var updateSql = $@"
+        UPDATE announcement
+        SET 
+            Title = {(updateAnnouncement.Title != null ? $"'{updateAnnouncement.Title}'" : "Title")}, 
+            Content = {(updateAnnouncement.Content != null ? $"'{updateAnnouncement.Content}'" : "Content")},
+            BeginPublishTime = {(updateAnnouncement.BeginPublishTime != null ? $"'{updateAnnouncement.BeginPublishTime:yyyy-MM-dd HH:mm:ss}'" : "BeginPublishTime")},
+            EndPublishTime = {(updateAnnouncement.EndPublishTime != null ? $"'{updateAnnouncement.EndPublishTime:yyyy-MM-dd HH:mm:ss}'" : "EndPublishTime")},
+            BeginViewTime = {(updateAnnouncement.BeginViewTime != null ? $"'{updateAnnouncement.BeginViewTime:yyyy-MM-dd HH:mm:ss}'" : "BeginViewTime")},
+            EndViewTime = {(updateAnnouncement.EndViewTime != null ? $"'{updateAnnouncement.EndViewTime:yyyy-MM-dd HH:mm:ss}'" : "EndViewTime")},
+            IsActive = {(updateAnnouncement.IsActive != null ? updateAnnouncement.IsActive.ToString() : "IsActive")}
+        WHERE AnnounceId = '{announceId}'";
+
+            // Execute the raw SQL update statement
+            _dbContext.Database.ExecuteSqlRaw(updateSql);
+        }
+
+
     }
 }

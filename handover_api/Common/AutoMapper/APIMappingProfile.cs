@@ -26,7 +26,15 @@ namespace MaiBackend.Common.AutoMapper
             CreateMap<Member, Member>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            CreateMap<CreateOrUpdateAnnoucementRequest, Announcement>()
+            CreateMap<CreateAnnoucementRequest, Announcement>()
+            .ForMember(dest => dest.BeginPublishTime, opt => opt.MapFrom(src => ParseDateString(src.BeginPublishTime)))
+            .ForMember(dest => dest.EndPublishTime, opt => opt.MapFrom(src => ParseDateString(src.EndPublishTime)))
+            .ForMember(dest => dest.BeginViewTime, opt => opt.MapFrom(src => ParseDateString(src.BeginViewTime)))
+            .ForMember(dest => dest.EndViewTime, opt => opt.MapFrom(src => ParseDateString(src.EndViewTime)))
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<Announcement, Announcement>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<UpdateAnnouncementRequest, Announcement>()
             .ForMember(dest => dest.BeginPublishTime, opt => opt.MapFrom(src => ParseDateString(src.BeginPublishTime)))
             .ForMember(dest => dest.EndPublishTime, opt => opt.MapFrom(src => ParseDateString(src.EndPublishTime)))
             .ForMember(dest => dest.BeginViewTime, opt => opt.MapFrom(src => ParseDateString(src.BeginViewTime)))
