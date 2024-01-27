@@ -194,9 +194,9 @@ namespace handover_api.Controllers
             // Retrieve attachments based on the unique AnnounceIds
             var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
 
-            var announceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
-            var matchedAnnouceReader = announceReaders.Where(announceReader => announceReader.UserId == userId).FirstOrDefault();
-            var isRead = (matchedAnnouceReader != null ? matchedAnnouceReader.IsRead : true);
+            // 更新成已讀
+            var announceReaders = _announcementService.UpdateAnnounceReaderToRead(announceId, userId);
+            var isRead = (announceReaders == null || announceReaders.IsRead);
 
             var result = new AnnouncementWithAttachments
             {
@@ -283,6 +283,53 @@ namespace handover_api.Controllers
             });
         }
 
+        [HttpDelete("{announceId}")]
+        [Authorize]
+        public IActionResult DeleteAnnouncement(string announceId)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+            if (!loginMemberAndPermission.PermissionSetting.IsDeleteAnnouce)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var announcement = _announcementService.GetAnnouncementByAnnounceId(announceId);
+            if (announcement == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "公告不存在"
+                });
+            }
+            var result = _announcementService.DeleteByAnnounceId(announceId);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = true,
+            });
+        }
+
+        [HttpPost("myAnnouncement/update/{announceId}")]
+        [Authorize]
+        public IActionResult UpdateMyAnnouncement(UpdateMyAnnouncementRequest request,string announceId)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+            var myAnnouncement = _announcementService.GetMyAnnouncements(announceId, userId);
+            if (myAnnouncement == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "不存在"
+                });
+            }
+            var result = _announcementService.UpdateMyAnnouncements(myAnnouncement.Id,request);
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result
+            });
+        }
 
         [HttpPost("Attachment/upload")]
         [AuthorizeRoles("1", "3", "5")]

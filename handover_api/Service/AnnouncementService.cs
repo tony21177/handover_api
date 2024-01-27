@@ -317,6 +317,108 @@ namespace handover_api.Service
         {
             return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ToList();
         }
+        public MyAnnouncement? GetMyAnnouncements(string announceId,string userId)
+        {
+            return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId&&myAnnouncement.UserId==userId).FirstOrDefault();
+        }
+        public bool UpdateMyAnnouncements(int id, UpdateMyAnnouncementRequest request)
+        {
+            // Find the MyAnnouncement by its primary key (id)
+            var myAnnouncementToUpdate = _dbContext.MyAnnouncements.Find(id);
+
+            if (myAnnouncementToUpdate != null)
+            {
+                // Update properties if the corresponding request properties are not null
+                if (request.IsBookToTop.HasValue)
+                {
+                    myAnnouncementToUpdate.IsBookToTop = request.IsBookToTop.Value;
+                }
+
+                if (request.IsRemind.HasValue)
+                {
+                    myAnnouncementToUpdate.IsRemind = request.IsRemind.Value;
+                }
+
+                // Save changes to the database
+                _dbContext.SaveChanges();
+
+                return true;
+            }
+
+            return false; // Return null if the MyAnnouncement with the specified id is not found
+        }
+
+        public AnnouceReader? UpdateAnnounceReaderToRead(string announceId, string userId)
+        {
+            var announcementToUpdate = _dbContext.AnnouceReaders
+                .FirstOrDefault(a => a.AnnounceId == announceId && a.UserId == userId);
+
+            if (announcementToUpdate != null)
+            {
+                announcementToUpdate.IsRead = true; 
+                announcementToUpdate.ReadTime = DateTime.Now;
+
+                _dbContext.SaveChanges();
+
+                return announcementToUpdate;
+            }
+
+            return null; // Return null if the announcement is not found
+        }
+
+        public bool DeleteByAnnounceId(String announceId)
+        {
+            using var transaction = _dbContext.Database.BeginTransaction();
+            try
+            {
+                // Step 1: Delete from 'AnnouceReader'
+                var annouceReaderToDelete = _dbContext.AnnouceReaders
+                    .FirstOrDefault(ar => ar.AnnounceId == announceId);
+
+                if (annouceReaderToDelete != null)
+                {
+                    _dbContext.AnnouceReaders.Remove(annouceReaderToDelete);
+                }
+
+
+                // Step 2: Delete from 'MyAnnouncement'
+                var myAnnouncementToDelete = _dbContext.MyAnnouncements
+                    .FirstOrDefault(ma => ma.AnnounceId == announceId);
+
+                if (myAnnouncementToDelete != null)
+                {
+                    _dbContext.MyAnnouncements.Remove(myAnnouncementToDelete);
+                }
+
+
+                // Step 3: Delete from 'Announcement'
+                var announcementToDelete = _dbContext.Announcements
+                    .FirstOrDefault(a => a.AnnounceId == announceId);
+
+                if (announcementToDelete != null)
+                {
+                    _dbContext.Announcements.Remove(announcementToDelete);
+                }
+                UpdateAnnounIdToNullForAnnounceAttachment(announceId);
+
+                // Save changes to the database
+                _dbContext.SaveChanges();
+
+                // If all deletions were successful, commit the transaction
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log if necessary
+                Console.WriteLine($"Error deleting records: {ex.Message}");
+
+                // Rollback the transaction in case of an exception
+                transaction.Rollback();
+                return false;
+            }
+
+        }
 
         public void UpdateAnnounceAttachments(List<string> attIds, string annoucementId, string creatorId)
         {
@@ -337,6 +439,18 @@ namespace handover_api.Service
             UPDATE announce_attachment
             SET AnnounceId = NULL, CreatorId = NULL
             WHERE AttId IN ({string.Join(",", attIds.Select(id => $"'{id}'"))})";
+
+            // Execute the raw SQL update statement
+            _dbContext.Database.ExecuteSqlRaw(updateSql);
+        }
+
+        public void UpdateAnnounIdToNullForAnnounceAttachment(string announceId)
+        {
+            // Construct the SQL UPDATE statement
+            var updateSql = $@"
+            UPDATE announce_attachment
+            SET AnnounceId = NULL, CreatorId = NULL
+            WHERE AnnounceId = {announceId}";
 
             // Execute the raw SQL update statement
             _dbContext.Database.ExecuteSqlRaw(updateSql);
