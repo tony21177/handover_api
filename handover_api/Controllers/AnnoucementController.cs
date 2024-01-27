@@ -305,13 +305,13 @@ namespace handover_api.Controllers
             var result = _announcementService.DeleteByAnnounceId(announceId);
             return Ok(new CommonResponse<dynamic>
             {
-                Result = true,
+                Result = result,
             });
         }
 
         [HttpPost("myAnnouncement/update/{announceId}")]
         [Authorize]
-        public IActionResult UpdateMyAnnouncement(UpdateMyAnnouncementRequest request,string announceId)
+        public IActionResult UpdateMyAnnouncement(UpdateMyAnnouncementRequest request, string announceId)
         {
             var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
             var userId = loginMemberAndPermission!.Member.UserId;
@@ -324,7 +324,7 @@ namespace handover_api.Controllers
                     Message = "不存在"
                 });
             }
-            var result = _announcementService.UpdateMyAnnouncements(myAnnouncement.Id,request);
+            var result = _announcementService.UpdateMyAnnouncements(myAnnouncement.Id, request);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result

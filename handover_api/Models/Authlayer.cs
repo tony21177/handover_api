@@ -6,32 +6,43 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 權限階層 Table
+/// </summary>
+[Table("authlayer")]
+[Index("AuthName", Name = "AuthName_UNIQUE", IsUnique = true)]
+[Index("AuthValue", Name = "AuthValue_UNIQUE", IsUnique = true)]
+public partial class Authlayer
 {
-    /// <summary>
-    /// 權限階層 Table
-    /// </summary>
-    [Table("authlayer")]
-    [Index("AuthName", Name = "AuthName_UNIQUE", IsUnique = true)]
-    [Index("AuthValue", Name = "AuthValue_UNIQUE", IsUnique = true)]
-    public partial class Authlayer
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        [StringLength(45)]
-        public string AuthName { get; set; }
-        public short? AuthValue { get; set; }
-        public bool IsCreateAnnouce { get; set; }
-        public bool IsUpdateAnnouce { get; set; }
-        public bool IsDeleteAnnouce { get; set; }
-        public bool IsHideAnnouce { get; set; }
-        public bool IsCreateHandover { get; set; }
-        public bool IsUpdateHandover { get; set; }
-        public bool IsDeleteHandover { get; set; }
-        public bool IsMemberControl { get; set; }
-        public bool IsCheckReport { get; set; }
-        [StringLength(100)]
-        public string AuthDescription { get; set; }
-    }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [StringLength(45)]
+    public string AuthName { get; set; }
+
+    public short? AuthValue { get; set; }
+
+    public bool IsCreateAnnouce { get; set; }
+
+    public bool IsUpdateAnnouce { get; set; }
+
+    public bool IsDeleteAnnouce { get; set; }
+
+    public bool IsHideAnnouce { get; set; }
+
+    public bool IsCreateHandover { get; set; }
+
+    public bool IsUpdateHandover { get; set; }
+
+    public bool IsDeleteHandover { get; set; }
+
+    public bool IsMemberControl { get; set; }
+
+    public bool IsCheckReport { get; set; }
+
+    [StringLength(100)]
+    public string AuthDescription { get; set; }
 }

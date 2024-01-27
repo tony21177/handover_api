@@ -6,54 +6,65 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 公告附件
+/// </summary>
+[Table("announce_attachment")]
+[Index("AttId", Name = "AttID_UNIQUE", IsUnique = true)]
+[Index("Index", Name = "Index_UNIQUE", IsUnique = true)]
+public partial class AnnounceAttachment
 {
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Required]
+    [Column("AttID")]
+    [StringLength(100)]
+    public string AttId { get; set; }
+
     /// <summary>
-    /// 公告附件
+    /// 上傳檔案的順序
     /// </summary>
-    [Table("announce_attachment")]
-    [Index("AttId", Name = "AttID_UNIQUE", IsUnique = true)]
-    [Index("Index", Name = "Index_UNIQUE", IsUnique = true)]
-    public partial class AnnounceAttachment
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        [Required]
-        [Column("AttID")]
-        [StringLength(100)]
-        public string AttId { get; set; }
-        /// <summary>
-        /// 上傳檔案的順序
-        /// </summary>
-        public int Index { get; set; }
-        [StringLength(45)]
-        public string FileName { get; set; }
-        [StringLength(200)]
-        public string FilePath { get; set; }
-        [StringLength(45)]
-        public string FileType { get; set; }
-        [StringLength(45)]
-        public string FileSizeText { get; set; }
-        public double? FileSizeNumber { get; set; }
-        [Required]
-        public bool? IsActive { get; set; }
-        /// <summary>
-        /// announcement.AnnounceID
-        /// 
-        /// </summary>
-        [Column("AnnounceID")]
-        [StringLength(100)]
-        public string? AnnounceId { get; set; }
-        /// <summary>
-        /// member.UserID
-        /// </summary>
-        [Column("CreatorID")]
-        [StringLength(45)]
-        public string? CreatorId { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    public int Index { get; set; }
+
+    [StringLength(45)]
+    public string FileName { get; set; }
+
+    [StringLength(200)]
+    public string FilePath { get; set; }
+
+    [StringLength(45)]
+    public string FileType { get; set; }
+
+    [StringLength(45)]
+    public string FileSizeText { get; set; }
+
+    public double? FileSizeNumber { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    /// <summary>
+    /// announcement.AnnounceID
+    /// 
+    /// </summary>
+    [Column("AnnounceID")]
+    [StringLength(100)]
+    public string AnnounceId { get; set; }
+
+    /// <summary>
+    /// member.UserID
+    /// </summary>
+    [Column("CreatorID")]
+    [StringLength(45)]
+    public string CreatorId { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }

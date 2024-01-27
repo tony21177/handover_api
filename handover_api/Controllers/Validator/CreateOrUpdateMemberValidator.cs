@@ -13,11 +13,16 @@ namespace handover_api.Controllers.Validator
         {
             if (action == ActionTypeEnum.Create)
             {
-
+                RuleFor(x => x.Account).NotEmpty().WithMessage("account為必須");
+                RuleFor(x => x.Password).NotEmpty().WithMessage("password為必須");
+                RuleFor(x => x.DisplayName).NotEmpty().WithMessage("displayName為必須");
+                RuleFor(x => x.IsActive).NotEmpty().WithMessage("isActive為必須");
+                RuleFor(x => x.AuthValue).NotEmpty().WithMessage("authValue為必須");
+                RuleFor(x => x.Uid).NotEmpty().WithMessage("uid為必須");
             }
             if (action == ActionTypeEnum.Update)
             {
-                RuleFor(x => x.UserID).Must(BeValidValue).WithMessage("userId為必須");
+                RuleFor(x => x.UserID).NotEmpty().WithMessage("userId為必須");
             }
             _authLayerService = authLayerService;
             ClassLevelCascadeMode = CascadeMode.Stop;
@@ -25,9 +30,10 @@ namespace handover_api.Controllers.Validator
             RuleFor(x => x.AuthValue).Must(ExistAuthValue).WithMessage("此階層不存在");
         }
 
-        private bool ExistAuthValue(short authValue)
+        private bool ExistAuthValue(short? authValue)
         {
-            var existAuthLayer = _authLayerService.GetByAuthValue(authValue);
+            if (authValue == null) return false;
+            var existAuthLayer = _authLayerService.GetByAuthValue(authValue.Value);
             return existAuthLayer != null;
         }
 

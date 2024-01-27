@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using MySql.EntityFrameworkCore.Extensions;
 using System.Text;
 using System.Text.Json;
 
@@ -22,9 +21,18 @@ builder.Services.AddCors(options =>
 });
 
 // Add DBContext
-builder.Services.AddEntityFrameworkMySQL().AddDbContext<HandoverContext>(options =>
+//var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
+//builder.Services.AddEntityFrameworkMySQL().AddDbContext<HandoverContext>(options =>
+//{
+//    options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
+//    options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
+//           .EnableSensitiveDataLogging();
+//}, ServiceLifetime.Scoped);
+
+var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
+builder.Services.AddEntityFrameworkMySql().AddDbContext<HandoverContext>(options =>
 {
-    options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
     options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
            .EnableSensitiveDataLogging();
 }, ServiceLifetime.Scoped);
@@ -110,5 +118,4 @@ app.MapControllers();
 
 
 app.Run();
-
 

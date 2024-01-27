@@ -6,45 +6,53 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 交班表主表底下組別
+/// </summary>
+[Table("handover_sheet_group")]
+[Index("GroupRank", Name = "GroupRank_UNIQUE", IsUnique = true)]
+[Index("SheetGroupId", Name = "SheetGroupID_UNIQUE", IsUnique = true)]
+public partial class HandoverSheetGroup
 {
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
     /// <summary>
-    /// 交班表主表底下組別
+    /// handover_sheet_main.SheetID
     /// </summary>
-    [Table("handover_sheet_group")]
-    [Index("GroupRank", Name = "GroupRank_UNIQUE", IsUnique = true)]
-    [Index("SheetGroupId", Name = "SheetGroupID_UNIQUE", IsUnique = true)]
-    public partial class HandoverSheetGroup
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        /// <summary>
-        /// handover_sheet_main.SheetID
-        /// </summary>
-        [Required]
-        [Column("MainSheetID")]
-        [StringLength(100)]
-        public string MainSheetId { get; set; }
-        /// <summary>
-        /// GUID
-        /// </summary>
-        [Required]
-        [Column("SheetGroupID")]
-        [StringLength(100)]
-        public string SheetGroupId { get; set; }
-        [StringLength(100)]
-        public string GroupTitle { get; set; }
-        [StringLength(200)]
-        public string GroupDescription { get; set; }
-        public int GroupRank { get; set; }
-        [Required]
-        public bool? IsActive { get; set; }
-        [StringLength(100)]
-        public string CreatorName { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    [Required]
+    [Column("MainSheetID")]
+    [StringLength(100)]
+    public string MainSheetId { get; set; }
+
+    /// <summary>
+    /// GUID
+    /// </summary>
+    [Required]
+    [Column("SheetGroupID")]
+    [StringLength(100)]
+    public string SheetGroupId { get; set; }
+
+    [StringLength(100)]
+    public string GroupTitle { get; set; }
+
+    [StringLength(200)]
+    public string GroupDescription { get; set; }
+
+    public int GroupRank { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    [StringLength(100)]
+    public string CreatorName { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }

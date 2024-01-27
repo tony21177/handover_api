@@ -3,174 +3,176 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+public partial class HandoverContext : DbContext
 {
-    public partial class HandoverContext : DbContext
+    public HandoverContext(DbContextOptions<HandoverContext> options)
+        : base(options)
     {
-        public HandoverContext()
-        {
-        }
-
-        public HandoverContext(DbContextOptions<HandoverContext> options)
-            : base(options)
-        {
-        }
-
-        public virtual DbSet<AnnouceReader> AnnouceReaders { get; set; }
-        public virtual DbSet<AnnounceAttachment> AnnounceAttachments { get; set; }
-        public virtual DbSet<Announcement> Announcements { get; set; }
-        public virtual DbSet<Authlayer> Authlayers { get; set; }
-        public virtual DbSet<HandoverSheetGroup> HandoverSheetGroups { get; set; }
-        public virtual DbSet<HandoverSheetMain> HandoverSheetMains { get; set; }
-        public virtual DbSet<HandoverSheetRow> HandoverSheetRows { get; set; }
-        public virtual DbSet<Member> Members { get; set; }
-        public virtual DbSet<MyAnnouncement> MyAnnouncements { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.UseCollation("utf8mb4_0900_ai_ci")
-                .HasCharSet("utf8mb4");
-
-            modelBuilder.Entity<AnnouceReader>(entity =>
-            {
-                entity.Property(e => e.AnnounceId).HasComment("announcement.AnnounceID");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.ReaderId).HasComment("PK(GUID)");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.UserId).HasComment("member.UserID");
-            });
-
-            modelBuilder.Entity<AnnounceAttachment>(entity =>
-            {
-                entity.HasComment("公告附件");
-
-                entity.Property(e => e.AnnounceId).HasComment("announcement.AnnounceID\n");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.CreatorId).HasComment("member.UserID");
-
-                entity.Property(e => e.Index).HasComment("上傳檔案的順序");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            modelBuilder.Entity<Announcement>(entity =>
-            {
-                entity.HasComment("公告");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.CreatorId).HasComment("對準 Member 的 UserID");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            modelBuilder.Entity<Authlayer>(entity =>
-            {
-                entity.HasComment("權限階層 Table");
-            });
-
-            modelBuilder.Entity<HandoverSheetGroup>(entity =>
-            {
-                entity.HasComment("交班表主表底下組別");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.MainSheetId).HasComment("handover_sheet_main.SheetID");
-
-                entity.Property(e => e.SheetGroupId).HasComment("GUID");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            modelBuilder.Entity<HandoverSheetMain>(entity =>
-            {
-                entity.HasComment("交班表設定主表");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            modelBuilder.Entity<HandoverSheetRow>(entity =>
-            {
-                entity.HasComment("交班表組別底下的Row資料");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.MainSheetId).HasComment("handover_sheet_main.SheetID");
-
-                entity.Property(e => e.SheetGroupId).HasComment("handover_sheet_group.SheetGroupID");
-
-                entity.Property(e => e.SheetRowId).HasComment("GUID");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.WeekDays).HasComment("星期幾要做這個項目");
-            });
-
-            modelBuilder.Entity<Member>(entity =>
-            {
-                entity.HasComment("人員設定\n");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.Uid).HasComment("人員獨立代碼");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            modelBuilder.Entity<MyAnnouncement>(entity =>
-            {
-                entity.HasComment("我的公告");
-
-                entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.CreatorId).HasComment("對準 Member 的 UserID");
-
-                entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.UpdatedTime)
-                    .ValueGeneratedOnAddOrUpdate()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            OnModelCreatingPartial(modelBuilder);
-        }
-
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
+
+    public virtual DbSet<AnnouceReader> AnnouceReaders { get; set; }
+
+    public virtual DbSet<AnnounceAttachment> AnnounceAttachments { get; set; }
+
+    public virtual DbSet<Announcement> Announcements { get; set; }
+
+    public virtual DbSet<AnnouncementHistory> AnnouncementHistories { get; set; }
+
+    public virtual DbSet<Authlayer> Authlayers { get; set; }
+
+    public virtual DbSet<HandoverSheetGroup> HandoverSheetGroups { get; set; }
+
+    public virtual DbSet<HandoverSheetMain> HandoverSheetMains { get; set; }
+
+    public virtual DbSet<HandoverSheetRow> HandoverSheetRows { get; set; }
+
+    public virtual DbSet<Member> Members { get; set; }
+
+    public virtual DbSet<MyAnnouncement> MyAnnouncements { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .UseCollation("utf8mb4_0900_ai_ci")
+            .HasCharSet("utf8mb4");
+
+        modelBuilder.Entity<AnnouceReader>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.AnnounceId).HasComment("announcement.AnnounceID");
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.ReaderId).HasComment("PK(GUID)");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("member.UserID,收件人");
+        });
+
+        modelBuilder.Entity<AnnounceAttachment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("announce_attachment", tb => tb.HasComment("公告附件"));
+
+            entity.Property(e => e.AnnounceId).HasComment("announcement.AnnounceID\n");
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatorId).HasComment("member.UserID");
+            entity.Property(e => e.Index).HasComment("上傳檔案的順序");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("announcement", tb => tb.HasComment("公告"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatorId).HasComment("對準 Member 的 UserID");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<AnnouncementHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("announcement_history", tb => tb.HasComment("公告更改紀錄"));
+
+            entity.Property(e => e.UpdatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<Authlayer>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("authlayer", tb => tb.HasComment("權限階層 Table"));
+        });
+
+        modelBuilder.Entity<HandoverSheetGroup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("handover_sheet_group", tb => tb.HasComment("交班表主表底下組別"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.MainSheetId).HasComment("handover_sheet_main.SheetID");
+            entity.Property(e => e.SheetGroupId).HasComment("GUID");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverSheetMain>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("handover_sheet_main", tb => tb.HasComment("交班表設定主表"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverSheetRow>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("handover_sheet_row", tb => tb.HasComment("交班表組別底下的Row資料"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.MainSheetId).HasComment("handover_sheet_main.SheetID");
+            entity.Property(e => e.SheetGroupId).HasComment("handover_sheet_group.SheetGroupID");
+            entity.Property(e => e.SheetRowId).HasComment("GUID");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.WeekDays).HasComment("星期幾要做這個項目");
+        });
+
+        modelBuilder.Entity<Member>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("member", tb => tb.HasComment("人員設定\n"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.Uid).HasComment("人員獨立代碼");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<MyAnnouncement>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("my_announcement", tb => tb.HasComment("我的公告"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatorId).HasComment("對準 Member 的 UserID");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

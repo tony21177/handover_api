@@ -2,6 +2,7 @@
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Transactions;
 
 namespace handover_api.Service
@@ -99,7 +100,7 @@ namespace handover_api.Service
             return;
         }
 
-        public Announcement? CreateAnnouncement(Announcement announcement, List<string> readerUserIdList, Member creator, List<string> attIdList)
+        public Announcement? CreateAnnouncement(Announcement announcement, List<string> readerUserIdList, Models.Member creator, List<string> attIdList)
         {
             using (var scope = new TransactionScope())
             {
@@ -317,36 +318,34 @@ namespace handover_api.Service
         {
             return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ToList();
         }
-        public MyAnnouncement? GetMyAnnouncements(string announceId,string userId)
+        public MyAnnouncement? GetMyAnnouncements(string announceId, string userId)
         {
-            return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId&&myAnnouncement.UserId==userId).FirstOrDefault();
+            return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId && myAnnouncement.UserId == userId).FirstOrDefault();
         }
         public bool UpdateMyAnnouncements(int id, UpdateMyAnnouncementRequest request)
         {
-            // Find the MyAnnouncement by its primary key (id)
-            var myAnnouncementToUpdate = _dbContext.MyAnnouncements.Find(id);
+            var myAnnouncementToUpdate = _dbContext.MyAnnouncements.FirstOrDefault(_myAnnouncement => _myAnnouncement.Id == id);
 
             if (myAnnouncementToUpdate != null)
             {
                 // Update properties if the corresponding request properties are not null
                 if (request.IsBookToTop.HasValue)
                 {
-                    myAnnouncementToUpdate.IsBookToTop = request.IsBookToTop.Value;
+                    myAnnouncementToUpdate.IsBookToTop = request.IsBookToTop ?? myAnnouncementToUpdate.IsBookToTop;
                 }
 
                 if (request.IsRemind.HasValue)
                 {
-                    myAnnouncementToUpdate.IsRemind = request.IsRemind.Value;
+                    myAnnouncementToUpdate.IsRemind = request.IsRemind ?? myAnnouncementToUpdate.IsRemind;
                 }
-
-                // Save changes to the database
                 _dbContext.SaveChanges();
 
                 return true;
             }
 
-            return false; // Return null if the MyAnnouncement with the specified id is not found
+            return false;
         }
+
 
         public AnnouceReader? UpdateAnnounceReaderToRead(string announceId, string userId)
         {
@@ -355,7 +354,7 @@ namespace handover_api.Service
 
             if (announcementToUpdate != null)
             {
-                announcementToUpdate.IsRead = true; 
+                announcementToUpdate.IsRead = true;
                 announcementToUpdate.ReadTime = DateTime.Now;
 
                 _dbContext.SaveChanges();
@@ -372,33 +371,14 @@ namespace handover_api.Service
             try
             {
                 // Step 1: Delete from 'AnnouceReader'
-                var annouceReaderToDelete = _dbContext.AnnouceReaders
-                    .FirstOrDefault(ar => ar.AnnounceId == announceId);
-
-                if (annouceReaderToDelete != null)
-                {
-                    _dbContext.AnnouceReaders.Remove(annouceReaderToDelete);
-                }
+                _dbContext.AnnouceReaders.Where(announceReader => announceReader.AnnounceId == announceId).ExecuteDelete();
 
 
                 // Step 2: Delete from 'MyAnnouncement'
-                var myAnnouncementToDelete = _dbContext.MyAnnouncements
-                    .FirstOrDefault(ma => ma.AnnounceId == announceId);
-
-                if (myAnnouncementToDelete != null)
-                {
-                    _dbContext.MyAnnouncements.Remove(myAnnouncementToDelete);
-                }
-
+                _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ExecuteDelete();
 
                 // Step 3: Delete from 'Announcement'
-                var announcementToDelete = _dbContext.Announcements
-                    .FirstOrDefault(a => a.AnnounceId == announceId);
-
-                if (announcementToDelete != null)
-                {
-                    _dbContext.Announcements.Remove(announcementToDelete);
-                }
+                _dbContext.Announcements.Where(announcement => announcement.AnnounceId == announceId).ExecuteDelete();
                 UpdateAnnounIdToNullForAnnounceAttachment(announceId);
 
                 // Save changes to the database
@@ -446,14 +426,14 @@ namespace handover_api.Service
 
         public void UpdateAnnounIdToNullForAnnounceAttachment(string announceId)
         {
-            // Construct the SQL UPDATE statement
-            var updateSql = $@"
+            // Construct the parameterized SQL UPDATE statement
+            var updateSql = @"
             UPDATE announce_attachment
             SET AnnounceId = NULL, CreatorId = NULL
-            WHERE AnnounceId = {announceId}";
+            WHERE AnnounceId = @announceId";
 
-            // Execute the raw SQL update statement
-            _dbContext.Database.ExecuteSqlRaw(updateSql);
+            // Execute the parameterized SQL update statement with the announceId parameter
+            _dbContext.Database.ExecuteSqlRaw(updateSql, new MySqlParameter("@announceId", announceId));
         }
 
         public void UpdateAnnouncementByAnnounceId(Announcement updateAnnouncement, string announceId)

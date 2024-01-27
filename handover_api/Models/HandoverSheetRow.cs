@@ -6,67 +6,82 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 交班表組別底下的Row資料
+/// </summary>
+[Table("handover_sheet_row")]
+[Index("SheetRowId", Name = "SheetRowID_UNIQUE", IsUnique = true)]
+public partial class HandoverSheetRow
 {
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
     /// <summary>
-    /// 交班表組別底下的Row資料
+    /// handover_sheet_main.SheetID
     /// </summary>
-    [Table("handover_sheet_row")]
-    [Index("SheetRowId", Name = "SheetRowID_UNIQUE", IsUnique = true)]
-    public partial class HandoverSheetRow
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        /// <summary>
-        /// handover_sheet_main.SheetID
-        /// </summary>
-        [Required]
-        [Column("MainSheetID")]
-        [StringLength(100)]
-        public string MainSheetId { get; set; }
-        /// <summary>
-        /// handover_sheet_group.SheetGroupID
-        /// </summary>
-        [Required]
-        [Column("SheetGroupID")]
-        [StringLength(100)]
-        public string SheetGroupId { get; set; }
-        /// <summary>
-        /// GUID
-        /// </summary>
-        [Required]
-        [Column("SheetRowID")]
-        [StringLength(100)]
-        public string SheetRowId { get; set; }
-        /// <summary>
-        /// 星期幾要做這個項目
-        /// </summary>
-        [StringLength(100)]
-        public string WeekDays { get; set; }
-        [StringLength(100)]
-        public string MainSheetTitle { get; set; }
-        [StringLength(45)]
-        public string RowCategory { get; set; }
-        [StringLength(100)]
-        public string MachineBrand { get; set; }
-        [StringLength(100)]
-        public string MachineCode { get; set; }
-        [StringLength(200)]
-        public string MachineSpec { get; set; }
-        [StringLength(100)]
-        public string MaintainItemName { get; set; }
-        [StringLength(200)]
-        public string MaintainItemDescription { get; set; }
-        [StringLength(100)]
-        public string MaintainItemType { get; set; }
-        [StringLength(100)]
-        public string MaintainAnswerType { get; set; }
-        [StringLength(1000)]
-        public string Remarks { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    [Required]
+    [Column("MainSheetID")]
+    [StringLength(100)]
+    public string MainSheetId { get; set; }
+
+    /// <summary>
+    /// handover_sheet_group.SheetGroupID
+    /// </summary>
+    [Required]
+    [Column("SheetGroupID")]
+    [StringLength(100)]
+    public string SheetGroupId { get; set; }
+
+    /// <summary>
+    /// GUID
+    /// </summary>
+    [Required]
+    [Column("SheetRowID")]
+    [StringLength(100)]
+    public string SheetRowId { get; set; }
+
+    /// <summary>
+    /// 星期幾要做這個項目
+    /// </summary>
+    [StringLength(100)]
+    public string WeekDays { get; set; }
+
+    [StringLength(100)]
+    public string MainSheetTitle { get; set; }
+
+    [StringLength(45)]
+    public string RowCategory { get; set; }
+
+    [StringLength(100)]
+    public string MachineBrand { get; set; }
+
+    [StringLength(100)]
+    public string MachineCode { get; set; }
+
+    [StringLength(200)]
+    public string MachineSpec { get; set; }
+
+    [StringLength(100)]
+    public string MaintainItemName { get; set; }
+
+    [StringLength(200)]
+    public string MaintainItemDescription { get; set; }
+
+    [StringLength(100)]
+    public string MaintainItemType { get; set; }
+
+    [StringLength(100)]
+    public string MaintainAnswerType { get; set; }
+
+    [StringLength(1000)]
+    public string Remarks { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }

@@ -10,12 +10,12 @@ namespace handover_api.Controllers.Request
     public class CreateOrUpdateMemberRequest
     {
         public string? UserID { get; set; }
-        public string Account { get; set; }
-        public string Password { get; set; }
-        public string DisplayName { get; set; }
-        public bool IsActive { get; set; }
-        public short AuthValue { get; set; }
-        public string PhotoUrls { get; set; }
-        public string Uid { get; set; }
+        public string? Account { get; set; }
+        public string? Password { get; set; }
+        public string? DisplayName { get; set; }
+        public bool? IsActive { get; set; }
+        public short? AuthValue { get; set; }
+        public string? PhotoUrls { get; set; }
+        public string? Uid { get; set; }
     }
 }

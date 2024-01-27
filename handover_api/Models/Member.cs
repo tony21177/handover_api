@@ -6,46 +6,55 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 人員設定
+/// 
+/// </summary>
+[Table("member")]
+[Index("Account", Name = "Account_UNIQUE", IsUnique = true)]
+[Index("UserId", Name = "UserID_UNIQUE", IsUnique = true)]
+public partial class Member
 {
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(45)]
+    public string Account { get; set; }
+
+    [StringLength(45)]
+    public string Password { get; set; }
+
+    [StringLength(45)]
+    public string DisplayName { get; set; }
+
+    [Required]
+    [Column("UserID")]
+    [StringLength(45)]
+    public string UserId { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    public short AuthValue { get; set; }
+
+    [Column("PhotoURL")]
+    [StringLength(1000)]
+    public string PhotoUrl { get; set; }
+
     /// <summary>
-    /// 人員設定
-    /// 
+    /// 人員獨立代碼
     /// </summary>
-    [Table("member")]
-    [Index("Account", Name = "Account_UNIQUE", IsUnique = true)]
-    [Index("UserId", Name = "UserID_UNIQUE", IsUnique = true)]
-    public partial class Member
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        [Required]
-        [StringLength(45)]
-        public string Account { get; set; }
-        [StringLength(45)]
-        public string Password { get; set; }
-        [StringLength(45)]
-        public string DisplayName { get; set; }
-        [Required]
-        [Column("UserID")]
-        [StringLength(45)]
-        public string UserId { get; set; }
-        [Required]
-        public bool? IsActive { get; set; }
-        public short AuthValue { get; set; }
-        [Column("PhotoURL")]
-        [StringLength(1000)]
-        public string PhotoUrl { get; set; }
-        /// <summary>
-        /// 人員獨立代碼
-        /// </summary>
-        [Column("UID")]
-        [StringLength(100)]
-        public string Uid { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    [Column("UID")]
+    [StringLength(100)]
+    public string Uid { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }

@@ -6,42 +6,49 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+[Table("annouce_reader")]
+[Index("ReaderId", Name = "ReaderID_UNIQUE", IsUnique = true)]
+public partial class AnnouceReader
 {
-    [Table("annouce_reader")]
-    [Index("ReaderId", Name = "ReaderID_UNIQUE", IsUnique = true)]
-    public partial class AnnouceReader
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        /// <summary>
-        /// PK(GUID)
-        /// </summary>
-        [Required]
-        [Column("ReaderID")]
-        [StringLength(100)]
-        public string ReaderId { get; set; }
-        /// <summary>
-        /// announcement.AnnounceID
-        /// </summary>
-        [Column("AnnounceID")]
-        [StringLength(100)]
-        public string AnnounceId { get; set; }
-        /// <summary>
-        /// member.UserID
-        /// </summary>
-        [Column("UserID")]
-        [StringLength(100)]
-        public string UserId { get; set; }
-        public bool IsRead { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime? ReadTime { get; set; }
-        [Required]
-        public bool? IsActive { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// PK(GUID)
+    /// </summary>
+    [Required]
+    [Column("ReaderID")]
+    [StringLength(100)]
+    public string ReaderId { get; set; }
+
+    /// <summary>
+    /// announcement.AnnounceID
+    /// </summary>
+    [Column("AnnounceID")]
+    [StringLength(100)]
+    public string AnnounceId { get; set; }
+
+    /// <summary>
+    /// member.UserID,收件人
+    /// </summary>
+    [Column("UserID")]
+    [StringLength(100)]
+    public string UserId { get; set; }
+
+    public bool IsRead { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? ReadTime { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }

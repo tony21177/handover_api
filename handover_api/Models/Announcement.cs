@@ -6,47 +6,58 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace handover_api.Models
+namespace handover_api.Models;
+
+/// <summary>
+/// 公告
+/// </summary>
+[Table("announcement")]
+[Index("AnnounceId", Name = "AnnounceID_UNIQUE", IsUnique = true)]
+public partial class Announcement
 {
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [StringLength(1000)]
+    public string Title { get; set; }
+
+    [StringLength(2000)]
+    public string Content { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? BeginPublishTime { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? EndPublishTime { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? BeginViewTime { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? EndViewTime { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
+
+    [Required]
+    [Column("AnnounceID")]
+    [StringLength(100)]
+    public string AnnounceId { get; set; }
+
     /// <summary>
-    /// 公告
+    /// 對準 Member 的 UserID
     /// </summary>
-    [Table("announcement")]
-    [Index("AnnounceId", Name = "AnnounceID_UNIQUE", IsUnique = true)]
-    public partial class Announcement
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        [StringLength(1000)]
-        public string Title { get; set; }
-        [StringLength(2000)]
-        public string Content { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? BeginPublishTime { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? EndPublishTime { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? BeginViewTime { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? EndViewTime { get; set; }
-        [Required]
-        public bool? IsActive { get; set; }
-        [Required]
-        [Column("AnnounceID")]
-        [StringLength(100)]
-        public string AnnounceId { get; set; }
-        /// <summary>
-        /// 對準 Member 的 UserID
-        /// </summary>
-        [Column("CreatorID")]
-        [StringLength(100)]
-        public string CreatorId { get; set; }
-        [StringLength(100)]
-        public string CreatorName { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime CreatedTime { get; set; }
-        [Column(TypeName = "timestamp")]
-        public DateTime UpdatedTime { get; set; }
-    }
+    [Column("CreatorID")]
+    [StringLength(100)]
+    public string CreatorId { get; set; }
+
+    [StringLength(100)]
+    public string CreatorName { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? CreatedTime { get; set; }
+
+    [Column(TypeName = "timestamp")]
+    public DateTime? UpdatedTime { get; set; }
 }
