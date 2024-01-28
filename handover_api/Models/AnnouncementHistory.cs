@@ -56,7 +56,7 @@ public partial class AnnouncementHistory
 
     public bool OldIsActive { get; set; }
 
-    public bool NewIsActive { get; set; }
+    public bool? NewIsActive { get; set; }
 
     [Required]
     [Column("AnnounceID")]

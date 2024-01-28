@@ -175,6 +175,7 @@ namespace handover_api.Service
                 try
                 {
                     UpdateAnnouncementByAnnounceId(newAnnouncement, announceId);
+
                     if (updateAnnouncementRequest.ReaderUserIdList != null)
                     {
                         List<string> originalUserIdsInReaders = annouceReaders.Select(x => x.UserId).ToList();
@@ -242,6 +243,7 @@ namespace handover_api.Service
                         }
 
                     }
+                    AddAnnouncementHistory(newAnnouncement, originalAnnouncement);
 
                     // 保存更改到資料庫
                     _dbContext.SaveChanges();
@@ -455,6 +457,31 @@ namespace handover_api.Service
             _dbContext.Database.ExecuteSqlRaw(updateSql);
         }
 
+        public void AddAnnouncementHistory(Announcement newAnnouncement, Announcement originalAnnouncement)
+        {
+            var newAnnounceHistory = new AnnouncementHistory
+            {
+                OldTitle = originalAnnouncement.Title,
+                NewTitle = newAnnouncement.Title,
+                OldContent = originalAnnouncement.Content,
+                NewContent = newAnnouncement.Content,
+                OldBeginPublishTime = originalAnnouncement.BeginPublishTime,
+                NewBeginPublishTime = newAnnouncement.BeginPublishTime,
+                OldEndPublishTime = originalAnnouncement.EndPublishTime,
+                NewEndPublishTime = newAnnouncement.EndPublishTime,
+                OldBeginViewTime = originalAnnouncement.BeginViewTime,
+                NewBeginViewTime = newAnnouncement.BeginViewTime,
+                OldEndViewTime = originalAnnouncement.EndViewTime,
+                NewEndViewTime = newAnnouncement.EndViewTime,
+                OldIsActive = originalAnnouncement.IsActive ?? true,
+                NewIsActive = newAnnouncement.IsActive,
+                CreatorId = originalAnnouncement.CreatorId,
+                CreatorName = originalAnnouncement.CreatorName,
+                AnnounceId = originalAnnouncement.AnnounceId
+            };
+
+            _dbContext.AnnouncementHistories.Add(newAnnounceHistory);
+        }
 
     }
 }

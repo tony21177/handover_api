@@ -152,7 +152,7 @@ namespace handover_api.Controllers
                     EndPublishTime = announcement.EndPublishTime,
                     BeginViewTime = announcement.BeginViewTime,
                     EndViewTime = announcement.EndViewTime,
-                    IsActive = announcement.IsActive ?? false,
+                    IsActive = announcement.IsActive ?? true,
                     AnnounceId = announcement.AnnounceId,
                     CreatorId = announcement.CreatorId,
                     CreatorName = announcement.CreatorName,
@@ -207,7 +207,7 @@ namespace handover_api.Controllers
                 EndPublishTime = announcement.EndPublishTime,
                 BeginViewTime = announcement.BeginViewTime,
                 EndViewTime = announcement.EndViewTime,
-                IsActive = announcement.IsActive ?? false,
+                IsActive = announcement.IsActive ?? true,
                 AnnounceId = announcement.AnnounceId,
                 CreatorId = announcement.CreatorId,
                 CreatorName = announcement.CreatorName,
@@ -306,6 +306,28 @@ namespace handover_api.Controllers
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
+            });
+        }
+
+        [HttpGet("myAnnouncement/{announceId}")]
+        [Authorize]
+        public IActionResult GetMyAnnouncement(string announceId)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+            var myAnnouncement = _announcementService.GetMyAnnouncements(announceId, userId);
+            if (myAnnouncement == null)
+            {
+                return BadRequest(new CommonResponse<MyAnnouncement>
+                {
+                    Result = false,
+                    Message = "不存在"
+                });
+            }
+            return Ok(new CommonResponse<MyAnnouncement>
+            {
+                Result = true,
+                Data = myAnnouncement
             });
         }
 
