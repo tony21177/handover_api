@@ -14,6 +14,7 @@ namespace handover_api.Models;
 /// </summary>
 [Table("member")]
 [Index("Account", Name = "Account_UNIQUE", IsUnique = true)]
+[Index("Uid", Name = "UID_UNIQUE", IsUnique = true)]
 [Index("UserId", Name = "UserID_UNIQUE", IsUnique = true)]
 public partial class Member
 {
