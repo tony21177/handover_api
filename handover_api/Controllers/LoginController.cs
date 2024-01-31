@@ -34,6 +34,12 @@ namespace handover_api.Controllers
             };
             var memberAndPermissionSetting = ValidateUser(loginRequest);
             if (memberAndPermissionSetting == null) return BadRequest(result);
+            if (memberAndPermissionSetting.Member.IsActive == false)
+            {
+                result.Result = false;
+                result.Message = "帳號停用";
+                return BadRequest(result);
+            }
 
             var token = _authHelpers.GenerateToken(memberAndPermissionSetting);
             result.Result = true;

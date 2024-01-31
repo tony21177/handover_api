@@ -324,6 +324,10 @@ namespace handover_api.Service
         {
             return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId && myAnnouncement.UserId == userId).FirstOrDefault();
         }
+        public List<MyAnnouncement> GetMyAnnouncementsByUserId( string userId)
+        {
+            return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.UserId == userId).ToList();
+        }
         public bool UpdateMyAnnouncements(int id, UpdateMyAnnouncementRequest request)
         {
             var myAnnouncementToUpdate = _dbContext.MyAnnouncements.FirstOrDefault(_myAnnouncement => _myAnnouncement.Id == id);

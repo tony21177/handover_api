@@ -309,25 +309,18 @@ namespace handover_api.Controllers
             });
         }
 
-        [HttpGet("myAnnouncement/{announceId}")]
+        [HttpGet("myAnnouncement")]
         [Authorize]
-        public IActionResult GetMyAnnouncement(string announceId)
+        public IActionResult GetMyAnnouncement()
         {
             var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
             var userId = loginMemberAndPermission!.Member.UserId;
-            var myAnnouncement = _announcementService.GetMyAnnouncements(announceId, userId);
-            if (myAnnouncement == null)
-            {
-                return BadRequest(new CommonResponse<MyAnnouncement>
-                {
-                    Result = false,
-                    Message = "不存在"
-                });
-            }
-            return Ok(new CommonResponse<MyAnnouncement>
+            var myAnnouncements = _announcementService.GetMyAnnouncementsByUserId(userId);
+            
+            return Ok(new CommonResponse<List<MyAnnouncement>>
             {
                 Result = true,
-                Data = myAnnouncement
+                Data = myAnnouncements
             });
         }
 

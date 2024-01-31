@@ -32,8 +32,8 @@ namespace handover_api.Controllers
             _authLayerService = authLayerService;
             _mapper = mapper;
             _logger = logger;
-            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService);
-            _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService);
+            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService,memberService);
+            _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService, memberService);
             _authHelpers = authHelpers;
         }
 
@@ -64,13 +64,14 @@ namespace handover_api.Controllers
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
 
-            var data = _memberService.GetAlRecipients();
-           
+            var recipients = _memberService.GetAlRecipients();
+
+
             var response = new CommonResponse<List<Recipient>>()
             {
                 Result = true,
                 Message = "",
-                Data = data
+                Data = recipients
             };
             return Ok(response);
         }

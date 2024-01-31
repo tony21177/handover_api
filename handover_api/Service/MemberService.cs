@@ -46,6 +46,7 @@ namespace handover_api.Service
             var result = from member in _dbContext.Members
                          join authLayer in _dbContext.Authlayers
                          on member.AuthValue equals authLayer.AuthValue
+                         where member.IsActive==true
                          select new Recipient
                          {
                              UserId = member.UserId,
@@ -85,6 +86,32 @@ namespace handover_api.Service
             {
                 _dbContext.Members.RemoveRange(membersToDelete);
                 _dbContext.SaveChanges();
+            }
+        }
+
+        public bool IsAccountNotExist(string account)
+        {
+           var existMemeber =  _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
+            if (existMemeber==null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool IsUidNotExist(string uid)
+        {
+            var existMemeber = _dbContext.Members.Where(member => member.Uid == uid).FirstOrDefault();
+            if (existMemeber == null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
     }
