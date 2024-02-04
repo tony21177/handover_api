@@ -23,6 +23,8 @@ public partial class HandoverContext : DbContext
 
     public virtual DbSet<Authlayer> Authlayers { get; set; }
 
+    public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
+
     public virtual DbSet<HandoverSheetGroup> HandoverSheetGroups { get; set; }
 
     public virtual DbSet<HandoverSheetMain> HandoverSheetMains { get; set; }
@@ -97,6 +99,19 @@ public partial class HandoverContext : DbContext
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("authlayer", tb => tb.HasComment("權限階層 Table"));
+        });
+
+        modelBuilder.Entity<FileDetailInfo>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("file_detail_info", tb => tb.HasComment("上傳檔案"));
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatorId).HasComment("member.UserID");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<HandoverSheetGroup>(entity =>

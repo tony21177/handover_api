@@ -2,6 +2,7 @@
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
+using System.Transactions;
 
 namespace handover_api.Service
 {
@@ -31,21 +32,44 @@ namespace handover_api.Service
                 var existingSheetMain = _dbContext.HandoverSheetMains.Find(updateHandoverSheetMain.SheetId);
                 if (existingSheetMain != null)
                 {
-                    // 使用 SetValues 來只更新不為 null 的屬性
+                    _mapper.Map(existingSheetMain, updateHandoverSheetMain);
                     _dbContext.Entry(existingSheetMain).CurrentValues.SetValues(updateHandoverSheetMain);
                     updatedHandoverSheetMainList.Add(updateHandoverSheetMain);
                 }
             });
-            // 將變更保存到資料庫
             _dbContext.SaveChanges();
             return updatedHandoverSheetMainList;
         }
 
-        public HandoverSheetMain CreateHandoverSheetMain(HandoverSheetMain newHandoverSheetMain)
+        public int GetMaxSheetMainId()
         {
-            _dbContext.HandoverSheetMains.Add(newHandoverSheetMain);
-            _dbContext.SaveChanges(true);
-            return newHandoverSheetMain;
+            var maxSheetId = _dbContext.HandoverSheetMains.Max(sheet => sheet.SheetId);
+            return maxSheetId;
+        }
+
+        public bool CreateHandoverSheetMain(HandoverSheetMain newHandoverSheetMain)
+        {
+            using (var scope = new TransactionScope())
+            {
+                try
+                {
+                    var newId = GetMaxSheetMainId() + 1;
+                    newHandoverSheetMain.SheetId = newId;
+                    newHandoverSheetMain.Id = Guid.NewGuid().ToString();
+                    _dbContext.HandoverSheetMains.Add(newHandoverSheetMain);
+                    _dbContext.SaveChanges(true);
+                    // 提交事務
+                    scope.Complete();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    // 處理事務失敗的例外
+                    // 這裡可以根據實際需求進行錯誤處理
+                    _logger.LogError("事務失敗[CreateHandoverSheetMain]：{msg}", ex.Message);
+                    return false;
+                }
+            }
         }
 
         public void DeleteHandoverSheetMain(int sheetID)
@@ -143,10 +167,10 @@ namespace handover_api.Service
         }
 
 
-        public List<SheetSettingDto> GetAllSettings()
+        public List<SheetSetting> GetAllSettings()
         {
             List<HandoverSheetMain> handoverSheetMainList = GetAllHandoverSheetMain();
-            List<SheetSettingDto> sheetSettingDtoList = _mapper.Map<List<SheetSettingDto>>(handoverSheetMainList);
+            List<SheetSetting> sheetSettingDtoList = _mapper.Map<List<SheetSetting>>(handoverSheetMainList);
 
 
             List<HandoverSheetGroup> handoverSheetGroups = GetAllHandoverSheetGroup();

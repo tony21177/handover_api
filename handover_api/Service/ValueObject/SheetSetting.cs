@@ -2,7 +2,7 @@
 
 namespace handover_api.Service.ValueObject
 {
-    public class SheetSettingDto
+    public class SheetSetting
     {
         public int SheetId { get; set; }
 

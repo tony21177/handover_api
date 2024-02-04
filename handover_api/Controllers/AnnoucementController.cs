@@ -67,11 +67,7 @@ namespace handover_api.Controllers
             var validationResult = _createAnnoucementRequestValidator.Validate(createAnnoucementRequest);
             if (!validationResult.IsValid)
             {
-                // 從 FluentValidation 的 ValidationResult 中獲取錯誤信息
-                var errorMessage = validationResult.Errors.FirstOrDefault()?.ErrorMessage;
-                response.Result = false;
-                response.Message = errorMessage ?? "參數錯誤";
-                return BadRequest(response);
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
             // 業務邏輯
@@ -117,13 +113,7 @@ namespace handover_api.Controllers
             var validationResult = _listAnnoucementRequestValidator.Validate(listAnnoucementRequest);
             if (!validationResult.IsValid)
             {
-                // 從 FluentValidation 的 ValidationResult 中獲取錯誤信息
-                var errorMessage = validationResult.Errors.FirstOrDefault()?.ErrorMessage;
-                return BadRequest(new CommonResponse<dynamic>
-                {
-                    Result = false,
-                    Message = errorMessage ?? "參數錯誤"
-                });
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
 
@@ -316,7 +306,7 @@ namespace handover_api.Controllers
             var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
             var userId = loginMemberAndPermission!.Member.UserId;
             var myAnnouncements = _announcementService.GetMyAnnouncementsByUserId(userId);
-            
+
             return Ok(new CommonResponse<List<MyAnnouncement>>
             {
                 Result = true,
@@ -348,7 +338,7 @@ namespace handover_api.Controllers
 
         [HttpPost("Attachment/upload")]
         [AuthorizeRoles("1", "3", "5")]
-        public async Task<IActionResult> UploadAttatchment([FromForm] UploadAnnouncementAttachmentRequest uploadAnnouncementAttachmentRequest)
+        public async Task<IActionResult> UploadAttatchment([FromForm] UploadFilesRequest uploadAnnouncementAttachmentRequest)
         {
             var fileDetails = await _fileUploadService.PostFilesAsync(uploadAnnouncementAttachmentRequest.Files, new List<string> { "announcement" });
             List<AnnounceAttachment> announceAttachments = new List<AnnounceAttachment>();

@@ -41,9 +41,22 @@ namespace MaiBackend.Common.AutoMapper
             .ForMember(dest => dest.BeginViewTime, opt => opt.MapFrom(src => ParseDateString(src.BeginViewTime)))
             .ForMember(dest => dest.EndViewTime, opt => opt.MapFrom(src => ParseDateString(src.EndViewTime)))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            CreateMap<HandoverSheetMain, SheetSettingDto>()
+            CreateMap<HandoverSheetMain, SheetSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            // 目標為null才複製過去
+            CreateMap<HandoverSheetMain, HandoverSheetMain>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
             CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<CreateOrUpdateSheetSettingMainRequest, HandoverSheetMain>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<FileDetail, FileDetailInfo>()
+                .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => ParseDateTimeFromUnixTime(src.CreatedTime)))
+                .ForMember(dest => dest.UpdatedTime, opt => opt.MapFrom(src => ParseDateTimeFromUnixTime(src.UpdatedTime)))
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<FileDetailInfo, FileDetail>()
+                .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => src.CreatedTime != null ? ConvertToUnixTimestamp(src.CreatedTime) : (long?)null))
+                .ForMember(dest => dest.UpdatedTime, opt => opt.MapFrom(src => src.UpdatedTime != null ? ConvertToUnixTimestamp(src.UpdatedTime) : (long?)null))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
@@ -73,5 +86,21 @@ namespace MaiBackend.Common.AutoMapper
             return null;
         }
 
+        public static DateTime? ParseDateTimeFromUnixTime(long? dateTime)
+        {
+            if (dateTime.HasValue)
+            {
+                return DateTimeOffset.FromUnixTimeMilliseconds(dateTime.Value).UtcDateTime;
+            }
+
+            return null;
+        }
+
+        public static long ConvertToUnixTimestamp(DateTime? dateTime)
+        {
+            if (dateTime == null) return 0;
+            DateTimeOffset dateTimeOffset = new DateTimeOffset((DateTime)dateTime);
+            return dateTimeOffset.ToUnixTimeMilliseconds();
+        }
     }
 }

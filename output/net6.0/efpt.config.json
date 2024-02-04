@@ -36,6 +36,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "file_detail_info",
+         "ObjectType": 0
+      },
+      {
          "Name": "handover_sheet_group",
          "ObjectType": 0
       },

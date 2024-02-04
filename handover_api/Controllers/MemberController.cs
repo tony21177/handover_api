@@ -89,26 +89,20 @@ namespace handover_api.Controllers
 
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
 
-            var response = new CommonResponse<MemberDto>
-            {
-                Result = true,
-                Message = "",
-                Data = null
-            };
             if (!validationResult.IsValid)
             {
-                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
-                response.Result = false;
-                response.Message = string.Join(", ", errors);
-                return BadRequest(response);
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
             var newMember = _mapper.Map<Member>(createMemberRequset);
             newMember.UserId = Guid.NewGuid().ToString();
 
             newMember = _memberService.CreateMember(newMember!);
             var newMemberDto = _mapper.Map<MemberDto>(newMember);
-            response.Data = newMemberDto;
-
+            var response = new CommonResponse<MemberDto>
+            {
+                Result = true,
+                Data = newMemberDto
+            };
             return Ok(response);
         }
 
@@ -123,25 +117,19 @@ namespace handover_api.Controllers
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
-            var response = new CommonResponse<MemberDto>
-            {
-                Result = true,
-                Message = "",
-                Data = null
-            };
             if (!validationResult.IsValid)
             {
-                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
-                response.Result = false;
-                response.Message = string.Join(", ", errors);
-                return BadRequest(response);
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
             var updateMember = _mapper.Map<Member>(updateMemberRequset);
             var updatedMember = _memberService.UpdateMember(updateMember);
             var updateedMemberDto = _mapper.Map<MemberDto>(updatedMember);
-            response.Data = updateedMemberDto;
-
+            var response = new CommonResponse<MemberDto>
+            {
+                Result = true,
+                Data = updateedMemberDto
+            };
             return Ok(response);
         }
 

@@ -1,4 +1,8 @@
-﻿namespace handover_api.Common
+﻿
+
+using FluentValidation.Results;
+
+namespace handover_api.Common
 {
     public class CommonResponse<T>
     {
@@ -12,6 +16,17 @@
             {
                 Result = false,
                 Message = "沒有權限",
+            };
+        }
+
+        public static CommonResponse<dynamic> BuildValidationFailedResponse(ValidationResult validationResult)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+
+            return new CommonResponse<dynamic>
+            {
+                Result = false,
+                Message = string.Join(", ", errors),
             };
         }
     }

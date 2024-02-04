@@ -1,4 +1,6 @@
 ﻿
+using AutoMapper;
+using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,12 +11,17 @@ namespace handover_api.Service
         private readonly ILogger<FileUploadService> _logger;
         //private readonly IFileProvider _fileProvider;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly HandoverContext _dbContext;
+        private readonly IMapper _mapper;
 
-        public FileUploadService(ILogger<FileUploadService> logger, IWebHostEnvironment webHostEnvironment)
+
+        public FileUploadService(ILogger<FileUploadService> logger, IWebHostEnvironment webHostEnvironment, HandoverContext dbContext, IMapper mapper)
         {
             _logger = logger;
             //_fileProvider = fileProvider;
             _webHostEnvironment = webHostEnvironment;
+            _dbContext = dbContext;
+            _mapper = mapper;
         }
 
         public async Task<List<FileDetail>> PostFilesAsync(List<IFormFile> files, List<string> fileFolderNames)
@@ -140,5 +147,30 @@ namespace handover_api.Service
             return Task.CompletedTask;
         }
 
+        public bool AddFileDetailInfo(List<FileDetailInfo> fileDetailInfoList)
+        {
+            try
+            {
+                fileDetailInfoList.ForEach(info =>
+                {
+                    _dbContext.FileDetailInfos.Add(info);
+                });
+
+                _dbContext.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[AddFileDetailInfo]:${error}", ex.StackTrace);
+                return false;
+            }
+            return true;
+        }
+
+        public FileDetail? GetFileDetail(string attid)
+        {
+            var fileDetailInfo = _dbContext.FileDetailInfos.Where(info => info.AttId == attid).FirstOrDefault();
+            if (fileDetailInfo == null) return null;
+            return _mapper.Map<FileDetail>(fileDetailInfo);
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace handover_api.Controllers.Request
 {
-    public class UploadAnnouncementAttachmentRequest
+    public class UploadFilesRequest
     {
         public List<IFormFile> Files { get; set; }
     }
