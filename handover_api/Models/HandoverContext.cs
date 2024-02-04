@@ -116,10 +116,11 @@ public partial class HandoverContext : DbContext
 
         modelBuilder.Entity<HandoverSheetMain>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.HasKey(e => e.SheetId).HasName("PRIMARY");
 
             entity.ToTable("handover_sheet_main", tb => tb.HasComment("交班表設定主表"));
 
+            entity.Property(e => e.SheetId).ValueGeneratedNever();
             entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.UpdatedTime)

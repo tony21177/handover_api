@@ -12,17 +12,17 @@ namespace handover_api.Models;
 /// 交班表設定主表
 /// </summary>
 [Table("handover_sheet_main")]
-[Index("SheetId", Name = "SheetID_UNIQUE", IsUnique = true)]
+[Index("Id", Name = "id_UNIQUE", IsUnique = true)]
 public partial class HandoverSheetMain
 {
     [Key]
-    [Column("id")]
-    public int Id { get; set; }
+    [Column("SheetID")]
+    public int SheetId { get; set; }
 
     [Required]
-    [Column("SheetID")]
+    [Column("id")]
     [StringLength(100)]
-    public string SheetId { get; set; }
+    public string Id { get; set; }
 
     [StringLength(100)]
     public string Title { get; set; }

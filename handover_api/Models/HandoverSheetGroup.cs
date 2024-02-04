@@ -18,23 +18,20 @@ public partial class HandoverSheetGroup
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; }
+    [StringLength(100)]
+    public string Id { get; set; }
 
     /// <summary>
     /// handover_sheet_main.SheetID
     /// </summary>
-    [Required]
     [Column("MainSheetID")]
-    [StringLength(100)]
-    public string MainSheetId { get; set; }
+    public int MainSheetId { get; set; }
 
     /// <summary>
     /// GUID
     /// </summary>
-    [Required]
     [Column("SheetGroupID")]
-    [StringLength(100)]
-    public string SheetGroupId { get; set; }
+    public int SheetGroupId { get; set; }
 
     [StringLength(100)]
     public string GroupTitle { get; set; }

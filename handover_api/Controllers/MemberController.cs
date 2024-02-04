@@ -23,16 +23,16 @@ namespace handover_api.Controllers
         private readonly AuthLayerService _authLayerService;
         private readonly IMapper _mapper;
         private readonly ILogger<MemberController> _logger;
+        private readonly AuthHelpers _authHelpers;
         private readonly IValidator<CreateOrUpdateMemberRequest> _createMemberRequestValidator;
         private readonly IValidator<CreateOrUpdateMemberRequest> _updateMemberRequestValidator;
-        private readonly AuthHelpers _authHelpers;
-        public MemberController(MemberService memberService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger,AuthHelpers authHelpers)
+        public MemberController(MemberService memberService, AuthLayerService authLayerService, IMapper mapper, ILogger<MemberController> logger, AuthHelpers authHelpers)
         {
             _memberService = memberService;
             _authLayerService = authLayerService;
             _mapper = mapper;
             _logger = logger;
-            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService,memberService);
+            _createMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Create, authLayerService, memberService);
             _updateMemberRequestValidator = new CreateOrUpdateMemberValidator(ActionTypeEnum.Update, authLayerService, memberService);
             _authHelpers = authHelpers;
         }
@@ -77,9 +77,16 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("create")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public async Task<IActionResult> Create(CreateOrUpdateMemberRequest createMemberRequset)
         {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
             var validationResult = await _createMemberRequestValidator.ValidateAsync(createMemberRequset);
 
             var response = new CommonResponse<MemberDto>
@@ -106,9 +113,15 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("update")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public async Task<IActionResult> Update(CreateOrUpdateMemberRequest updateMemberRequset)
         {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
             var validationResult = await _updateMemberRequestValidator.ValidateAsync(updateMemberRequset);
             var response = new CommonResponse<MemberDto>
             {
@@ -133,10 +146,15 @@ namespace handover_api.Controllers
         }
 
         [HttpDelete("delete/{userId}")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public IActionResult Delete(string userId)
         {
-
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsMemberControl)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
             _memberService.DeleteMember(userId);
 
             var response = new CommonResponse<Member>()

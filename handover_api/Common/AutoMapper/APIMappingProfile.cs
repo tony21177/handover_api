@@ -2,6 +2,7 @@
 using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Models;
+using handover_api.Service.ValueObject;
 using System.Globalization;
 using Member = handover_api.Models.Member;
 
@@ -40,7 +41,10 @@ namespace MaiBackend.Common.AutoMapper
             .ForMember(dest => dest.BeginViewTime, opt => opt.MapFrom(src => ParseDateString(src.BeginViewTime)))
             .ForMember(dest => dest.EndViewTime, opt => opt.MapFrom(src => ParseDateString(src.EndViewTime)))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-
+            CreateMap<HandoverSheetMain, SheetSettingDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
         //public Dictionary<string, object>? MapSchema(ColumnDefinition src)

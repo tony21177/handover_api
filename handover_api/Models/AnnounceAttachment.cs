@@ -30,7 +30,7 @@ public partial class AnnounceAttachment
     /// </summary>
     public int Index { get; set; }
 
-    [StringLength(45)]
+    [StringLength(200)]
     public string FileName { get; set; }
 
     [StringLength(200)]

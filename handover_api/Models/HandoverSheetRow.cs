@@ -17,31 +17,26 @@ public partial class HandoverSheetRow
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; }
+    [StringLength(100)]
+    public string Id { get; set; }
 
     /// <summary>
     /// handover_sheet_main.SheetID
     /// </summary>
-    [Required]
     [Column("MainSheetID")]
-    [StringLength(100)]
-    public string MainSheetId { get; set; }
+    public int MainSheetId { get; set; }
 
     /// <summary>
     /// handover_sheet_group.SheetGroupID
     /// </summary>
-    [Required]
     [Column("SheetGroupID")]
-    [StringLength(100)]
-    public string SheetGroupId { get; set; }
+    public int SheetGroupId { get; set; }
 
     /// <summary>
     /// GUID
     /// </summary>
-    [Required]
     [Column("SheetRowID")]
-    [StringLength(100)]
-    public string SheetRowId { get; set; }
+    public int SheetRowId { get; set; }
 
     /// <summary>
     /// 星期幾要做這個項目
@@ -50,7 +45,7 @@ public partial class HandoverSheetRow
     public string WeekDays { get; set; }
 
     [StringLength(100)]
-    public string MainSheetTitle { get; set; }
+    public string SheetGroupTitle { get; set; }
 
     [StringLength(45)]
     public string RowCategory { get; set; }

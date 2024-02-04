@@ -18,7 +18,7 @@ namespace handover_api.Common.IoC.Configuration.DI
                 services.AddScoped<AnnouncementService>();
                 services.AddScoped<FileUploadService>();
                 services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-
+                services.AddScoped<HandoverService>();
             }
         }
 
