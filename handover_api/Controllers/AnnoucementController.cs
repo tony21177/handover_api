@@ -184,11 +184,15 @@ namespace handover_api.Controllers
             // Retrieve attachments based on the unique AnnounceIds
             var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
 
+            List<AnnouceReader> annouceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
+            var readerUserIdList = annouceReaders.Select(ar => ar.UserId).ToList();
+            var readersMembeList = _memberService.GetActiveMembersByUserIds(readerUserIdList);
+            var readersMemberDtoList = GetAnnounceReaderMemberDtoList(announceId);
             // 更新成已讀
             var announceReaders = _announcementService.UpdateAnnounceReaderToRead(announceId, userId);
             var isRead = (announceReaders == null || announceReaders.IsRead);
 
-            var result = new AnnouncementWithAttachments
+            var result = new AnnouncementWithAttachmentsReaders
             {
                 Id = announcement.Id,
                 Title = announcement.Title,
@@ -204,13 +208,24 @@ namespace handover_api.Controllers
                 CreatedTime = announcement.CreatedTime,
                 UpdatedTime = announcement.UpdatedTime,
                 AnnounceAttachments = attachments,
+                ReaderUserList = readersMemberDtoList,
                 IsRead = isRead, // 表示此篇對於查詢者(現在登入的member)是否為已讀或未讀,若不在在收件人中給true
             };
-            return Ok(new CommonResponse<AnnouncementWithAttachments>
+            return Ok(new CommonResponse<AnnouncementWithAttachmentsReaders>
             {
                 Result = true,
                 Data = result
             });
+        }
+
+        private List<MemberDto> GetAnnounceReaderMemberDtoList(String announceId)
+        {
+            List<AnnouceReader> annouceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
+            var readerUserIdList = annouceReaders.Select(ar => ar.UserId).ToList();
+            var readersMembeList = _memberService.GetActiveMembersByUserIds(readerUserIdList);
+            var readersMemberDtoList = _mapper.Map<List<MemberDto>>(readersMembeList);
+            readersMemberDtoList.ForEach(member => member.Password = null);
+            return readersMemberDtoList;
         }
 
         [HttpPost("update/{announceId}")]
