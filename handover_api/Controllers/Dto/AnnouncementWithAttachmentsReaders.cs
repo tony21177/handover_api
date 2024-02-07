@@ -6,7 +6,7 @@ namespace handover_api.Controllers.Dto
     {
         
 
-        public List<MemberDto> ReaderUserList { get; set; } = new List<MemberDto>();
+        public List<AnnouceReaderMemberDto> ReaderUserList { get; set; } = new List<AnnouceReaderMemberDto>();
 
     }
 }

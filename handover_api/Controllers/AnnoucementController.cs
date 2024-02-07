@@ -218,14 +218,19 @@ namespace handover_api.Controllers
             });
         }
 
-        private List<MemberDto> GetAnnounceReaderMemberDtoList(String announceId)
+        private List<AnnouceReaderMemberDto> GetAnnounceReaderMemberDtoList(String announceId)
         {
             List<AnnouceReader> annouceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
             var readerUserIdList = annouceReaders.Select(ar => ar.UserId).ToList();
             var readersMembeList = _memberService.GetActiveMembersByUserIds(readerUserIdList);
-            var readersMemberDtoList = _mapper.Map<List<MemberDto>>(readersMembeList);
-            readersMemberDtoList.ForEach(member => member.Password = null);
-            return readersMemberDtoList;
+            var announceReadersMemberDtoList = _mapper.Map<List<AnnouceReaderMemberDto>>(readersMembeList);
+            announceReadersMemberDtoList.ForEach(dto =>
+            {
+                var matchedAnnounceReader = annouceReaders.Find(annouceReader => annouceReader.UserId == dto.UserId);
+                dto.IsRead = matchedAnnounceReader.IsRead;
+                dto.ReadTime = matchedAnnounceReader.ReadTime;
+            });
+            return announceReadersMemberDtoList;
         }
 
         [HttpPost("update/{announceId}")]

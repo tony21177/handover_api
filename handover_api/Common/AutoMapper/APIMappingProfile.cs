@@ -24,6 +24,8 @@ namespace MaiBackend.Common.AutoMapper
             //.ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src =>
             //    src.PhotoUrl != null ? src.PhotoUrl.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList() : null))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<Member, AnnouceReaderMemberDto>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<Member, Member>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
