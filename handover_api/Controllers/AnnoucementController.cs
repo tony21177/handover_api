@@ -11,6 +11,7 @@ using handover_api.Utils;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace handover_api.Controllers
 {
@@ -72,6 +73,12 @@ namespace handover_api.Controllers
 
             // 業務邏輯
             var newAnnouncement = _mapper.Map<Announcement>(createAnnoucementRequest);
+
+            if (!createAnnoucementRequest.ReaderUserIdList.Contains(memberAndPermissionSetting.Member.UserId))
+            {
+                createAnnoucementRequest.ReaderUserIdList.Add(memberAndPermissionSetting.Member.UserId);
+            }
+
             newAnnouncement = _announcementService.CreateAnnouncement(newAnnouncement, createAnnoucementRequest.ReaderUserIdList, memberAndPermissionSetting.Member, createAnnoucementRequest.AttIdList);
             if (newAnnouncement == null)
             {
@@ -312,7 +319,7 @@ namespace handover_api.Controllers
                     Message = "公告不存在"
                 });
             }
-            var result = _announcementService.DeleteByAnnounceId(announceId);
+            var result = _announcementService.InActiveByAnnounceId(announceId);
             return Ok(new CommonResponse<dynamic>
             {
                 Result = result,
@@ -326,11 +333,27 @@ namespace handover_api.Controllers
             var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
             var userId = loginMemberAndPermission!.Member.UserId;
             var myAnnouncements = _announcementService.GetMyAnnouncementsByUserId(userId);
+            List<MyAnnouncementWithAttachmentsDto> myAnnouncementsWithAttachList = new List<MyAnnouncementWithAttachmentsDto>();
+            myAnnouncements.ForEach(myAnnouncement =>
+            {
+                var myAnnouncementsWithAttachDto = _mapper.Map<MyAnnouncementWithAttachmentsDto>(myAnnouncement);
+                // Retrieve attachments based on the unique AnnounceIds
+                var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { myAnnouncement.AnnounceId });
+                myAnnouncementsWithAttachDto.AnnounceAttachments = attachments;
+                // creator對於目前這篇公告是已讀還是未讀
+                var creatorId = myAnnouncement.CreatorId;
+                var creator = _memberService.GetMemberByUserId(creatorId);
+                myAnnouncementsWithAttachDto.CreatorName = creator?.DisplayName;
 
-            return Ok(new CommonResponse<List<MyAnnouncement>>
+                var isCreatorRead = _announcementService.IsUserReadAnnouncement(myAnnouncement.AnnounceId,creatorId);
+                myAnnouncementsWithAttachDto.IsCreatorRead = isCreatorRead;
+                myAnnouncementsWithAttachList.Add(myAnnouncementsWithAttachDto);
+            });
+
+            return Ok(new CommonResponse<List<MyAnnouncementWithAttachmentsDto>>
             {
                 Result = true,
-                Data = myAnnouncements
+                Data = myAnnouncementsWithAttachList
             });
         }
 

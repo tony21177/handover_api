@@ -406,6 +406,39 @@ namespace handover_api.Service
 
         }
 
+        public bool InActiveByAnnounceId(String announceId)
+        {
+            using var transaction = _dbContext.Database.BeginTransaction();
+            try
+            {
+                var announcement = _dbContext.Announcements.Where(_announcement => _announcement.AnnounceId == announceId).FirstOrDefault();
+                if (announcement != null)
+                {
+                    var announceReaderList = _dbContext.AnnouceReaders.Where(annouceReader=> annouceReader.AnnounceId==announceId).ToList();
+                    var myAnnouncementList = _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ToList();
+                    announceReaderList.ForEach(annouceReader => annouceReader.IsActive = false);
+                    myAnnouncementList.ForEach(myAnnouncement => myAnnouncement.IsActive = false);
+                    announcement.IsActive = false;
+                }
+
+                // Save changes to the database
+                _dbContext.SaveChanges();
+
+                // If all deletions were successful, commit the transaction
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions and log if necessary
+                Console.WriteLine($"Error InActiveByAnnounceId records: {ex.Message}");
+
+                // Rollback the transaction in case of an exception
+                transaction.Rollback();
+                return false;
+            }
+        }
+
         public void UpdateAnnounceAttachments(List<string> attIds, string annoucementId, string creatorId)
         {
             // Construct the SQL UPDATE statement
@@ -485,6 +518,16 @@ namespace handover_api.Service
             };
 
             _dbContext.AnnouncementHistories.Add(newAnnounceHistory);
+        }
+
+        public bool IsUserReadAnnouncement(String announcementId,String userId)
+        {
+            var annoucementReader = _dbContext.AnnouceReaders.Where(annouceReader=>annouceReader.UserId==userId&&annouceReader.AnnounceId==announcementId).FirstOrDefault();
+            if (annoucementReader != null)
+            {
+                return annoucementReader.IsRead;
+            }
+            return false;
         }
 
     }

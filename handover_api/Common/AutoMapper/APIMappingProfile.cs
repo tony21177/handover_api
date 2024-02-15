@@ -43,6 +43,8 @@ namespace MaiBackend.Common.AutoMapper
             .ForMember(dest => dest.BeginViewTime, opt => opt.MapFrom(src => ParseDateString(src.BeginViewTime)))
             .ForMember(dest => dest.EndViewTime, opt => opt.MapFrom(src => ParseDateString(src.EndViewTime)))
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<MyAnnouncement, MyAnnouncementWithAttachmentsDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverSheetMain, SheetSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             // 目標為null才複製過去
