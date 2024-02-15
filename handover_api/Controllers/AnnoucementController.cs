@@ -345,8 +345,8 @@ namespace handover_api.Controllers
                 var creator = _memberService.GetMemberByUserId(creatorId);
                 myAnnouncementsWithAttachDto.CreatorName = creator?.DisplayName;
 
-                var isCreatorRead = _announcementService.IsUserReadAnnouncement(myAnnouncement.AnnounceId,creatorId);
-                myAnnouncementsWithAttachDto.IsCreatorRead = isCreatorRead;
+                var isRead = _announcementService.IsUserReadAnnouncement(myAnnouncement.AnnounceId,loginMemberAndPermission.Member.UserId);
+                myAnnouncementsWithAttachDto.IsRead = isRead;
                 myAnnouncementsWithAttachList.Add(myAnnouncementsWithAttachDto);
             });
 

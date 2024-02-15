@@ -44,6 +44,6 @@ namespace handover_api.Controllers.Dto
         public List<AnnounceAttachment> AnnounceAttachments { get; set; } = new List<AnnounceAttachment>();
         public string? CreatorName { get; set; }
 
-        public bool? IsCreatorRead { get; set; }
+        public bool? IsRead { get; set; }
     }
 }
