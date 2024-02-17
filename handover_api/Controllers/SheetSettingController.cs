@@ -276,9 +276,24 @@ namespace handover_api.Controllers
             {
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
-
+            var mainSheetId = createSettingRowRequest.MainSheetId;
+            var sheetGroupId = createSettingRowRequest.SheetGroupId;
+            var sheetMain = _handoverService.GetSheetMainByMainSheetId(mainSheetId.Value);
+            if (sheetMain == null)
+            {
+                return BadRequest(new CommonResponse<dynamic> { Result=false,Message= "此mainSheetId不存在" });
+            }
+            var sheetGroup = _handoverService.GetSheetGroupBySheetGroupId(sheetGroupId.Value);
+            if (sheetGroup == null)
+            {
+                return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "此sheetGroupId不存在" });
+            }
 
             var newSettingRow = _mapper.Map<HandoverSheetRow>(createSettingRowRequest);
+            newSettingRow.MainSheetId = mainSheetId.Value;
+            newSettingRow.SheetGroupId = sheetGroupId.Value;
+            newSettingRow.SheetGroupTitle = sheetGroup.GroupTitle;
+            newSettingRow.CreatorName = memberAndPermissionSetting.Member.DisplayName;
             var result = _handoverService.CreateHandoverSheetRow(newSettingRow);
             var response = new CommonResponse<HandoverSheetGroup>()
             {
@@ -289,7 +304,7 @@ namespace handover_api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("Group/update")]
+        [HttpPost("Row/update")]
         [Authorize]
         public IActionResult UpdateSettingRow(CreateOrUpdateSheetSettingRowRequest updateSettingRowRequest)
         {
@@ -318,9 +333,9 @@ namespace handover_api.Controllers
             return Ok(response);
         }
 
-        [HttpDelete("Group/delete/{sheetGroupId}")]
+        [HttpDelete("Row/delete/{sheetRowId}")]
         [Authorize]
-        public IActionResult DeleteGroup(int sheetGroupId)
+        public IActionResult DeleteRow(int sheetRowId)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
@@ -328,7 +343,7 @@ namespace handover_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            _handoverService.InActiveHandoverSheetGroup(sheetGroupId);
+            _handoverService.InActiveHandoverSheetRow(sheetRowId);
 
             var response = new CommonResponse<dynamic>()
             {

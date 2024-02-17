@@ -19,5 +19,6 @@ namespace handover_api.Controllers.Request
         public string? MaintainItemType { get; set; }
         public string? MaintainAnswerType { get; set; }
         public string? Remarks { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

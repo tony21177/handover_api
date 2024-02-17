@@ -29,6 +29,12 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetMains.Where(m=>m.SheetId==mainSheetId).FirstOrDefault();
         }
 
+        public HandoverSheetGroup? GetSheetGroupBySheetGroupId(int sheetGroupId)
+        {
+            return _dbContext.HandoverSheetGroups.Where(g => g.SheetGroupId == sheetGroupId).FirstOrDefault();
+        }
+
+        
         public List<HandoverSheetMain> UpdateHandoverSheetMains(List<HandoverSheetMain> updateHandoverSheetMainList)
         {
             var updatedHandoverSheetMainList = new List<HandoverSheetMain>();
@@ -95,7 +101,7 @@ namespace handover_api.Service
             }
             else
             {
-                return (int)(sheetGroupId * 100); // 如果為 null，返回預設值
+                return (int)(sheetGroupId * 1000); // 如果為 null，返回預設值
             }
         }
 
@@ -227,9 +233,10 @@ namespace handover_api.Service
             var updatedHandoverSheetRowList = new List<HandoverSheetRow>();
             updateHandoverSheetRowList.ForEach(updateHandoverSheetRow =>
             {
-                var existingSheetRow = _dbContext.HandoverSheetRows.Find(updateHandoverSheetRow.SheetGroupId);
+                var existingSheetRow = _dbContext.HandoverSheetRows.Where(r => r.SheetRowId == updateHandoverSheetRow.SheetRowId).FirstOrDefault();
                 if (existingSheetRow != null)
                 {
+                    _mapper.Map(existingSheetRow, updateHandoverSheetRow);
                     // 使用 SetValues 來只更新不為 null 的屬性
                     _dbContext.Entry(existingSheetRow).CurrentValues.SetValues(updateHandoverSheetRow);
                     updatedHandoverSheetRowList.Add(updateHandoverSheetRow);
@@ -245,7 +252,7 @@ namespace handover_api.Service
             using var scope = new TransactionScope();
             try
             {
-                var newSheetRowId = GetMaxSheetRowId(newHandoverSheetRow.MainSheetId,newHandoverSheetRow.SheetGroupId);
+                var newSheetRowId = GetMaxSheetRowId(newHandoverSheetRow.MainSheetId.Value,newHandoverSheetRow.SheetGroupId.Value);
                 newHandoverSheetRow.SheetRowId= newSheetRowId + 1;
                 newHandoverSheetRow.Id = Guid.NewGuid().ToString();
                 _dbContext.HandoverSheetRows.Add(newHandoverSheetRow);

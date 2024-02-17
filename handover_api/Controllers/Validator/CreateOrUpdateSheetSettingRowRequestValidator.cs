@@ -18,6 +18,7 @@ namespace handover_api.Controllers.Validator
                 RuleFor(x => x.MainSheetId).NotEmpty().WithMessage("mainSheetId為必須");
                 RuleFor(x => x.SheetGroupId).NotEmpty().WithMessage("sheetGroupId為必須");
                 RuleFor(x => x.WeekDays).Must(ValidWeekDays).WithMessage("weekDays為以,分隔的1-7數字");
+                RuleFor(x => x.IsActive).NotNull().WithMessage("isActive為必須");
 
             }
             if (action == ActionTypeEnum.Update)
