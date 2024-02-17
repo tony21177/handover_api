@@ -32,9 +32,7 @@ public partial class HandoverSheetRow
     [Column("SheetGroupID")]
     public int SheetGroupId { get; set; }
 
-    /// <summary>
-    /// GUID
-    /// </summary>
+ 
     [Column("SheetRowID")]
     public int SheetRowId { get; set; }
 

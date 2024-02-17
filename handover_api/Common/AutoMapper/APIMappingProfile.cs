@@ -50,10 +50,20 @@ namespace MaiBackend.Common.AutoMapper
             // 目標為null才複製過去
             CreateMap<HandoverSheetMain, HandoverSheetMain>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
+            CreateMap<HandoverSheetGroup, HandoverSheetGroup>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
+            CreateMap<HandoverSheetRow, HandoverSheetRow>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
+
             CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateOrUpdateSheetSettingMainRequest, HandoverSheetMain>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<CreateOrUpdateSheetSettingGroupRequest, HandoverSheetGroup>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<CreateOrUpdateSheetSettingRowRequest, HandoverSheetRow>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             CreateMap<FileDetail, FileDetailInfo>()
                 .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => ParseDateTimeFromUnixTime(src.CreatedTime)))
                 .ForMember(dest => dest.UpdatedTime, opt => opt.MapFrom(src => ParseDateTimeFromUnixTime(src.UpdatedTime)))

@@ -24,6 +24,11 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetMains.ToList();
         }
 
+        public HandoverSheetMain? GetSheetMainByMainSheetId(int mainSheetId)
+        {
+            return _dbContext.HandoverSheetMains.Where(m=>m.SheetId==mainSheetId).FirstOrDefault();
+        }
+
         public List<HandoverSheetMain> UpdateHandoverSheetMains(List<HandoverSheetMain> updateHandoverSheetMainList)
         {
             var updatedHandoverSheetMainList = new List<HandoverSheetMain>();
@@ -43,8 +48,55 @@ namespace handover_api.Service
 
         public int GetMaxSheetMainId()
         {
-            var maxSheetId = _dbContext.HandoverSheetMains.Max(sheet => sheet.SheetId);
-            return maxSheetId;
+            var maxSheetId = _dbContext.HandoverSheetMains
+                .Select(sheetMain => (int?)sheetMain.SheetId)
+                .OrderByDescending(sheetId => sheetId)
+                .FirstOrDefault(); // 取得第一個結果或者 null
+            if (maxSheetId.HasValue)
+            {
+                return maxSheetId.Value; // 如果有值，返回該值
+            }
+            else
+            {
+                return 0; // 如果為 null，返回預設值
+            }
+        }
+
+
+        public int GetMaxSheetGroupId(int mainSheetId)
+        {
+            var maxSheetGroupId = _dbContext.HandoverSheetGroups
+                .Where(sheetGroup => sheetGroup.MainSheetId == mainSheetId)
+                .Select(sheetGroup => (int?)sheetGroup.SheetGroupId) 
+                .OrderByDescending(sheetGroupId => sheetGroupId)
+                .FirstOrDefault(); // 取得第一個結果或者 null
+
+            if (maxSheetGroupId.HasValue)
+            {
+                return maxSheetGroupId.Value; // 如果有值，返回該值
+            }
+            else
+            {
+                return (int)(mainSheetId * 100); // 如果為 null，返回預設值
+            }
+        }
+
+        public int GetMaxSheetRowId(int mainSheetId,int sheetGroupId)
+        {
+            var maxSheetRowId = _dbContext.HandoverSheetRows
+                .Where(row => row.MainSheetId==mainSheetId&&row.SheetGroupId==sheetGroupId)
+                .Select(row => (int?)row.SheetRowId)
+                .OrderByDescending(rowId => rowId)
+                .FirstOrDefault(); // 取得第一個結果或者 null
+
+            if (maxSheetRowId.HasValue)
+            {
+                return maxSheetRowId.Value; // 如果有值，返回該值
+            }
+            else
+            {
+                return (int)(sheetGroupId * 100); // 如果為 null，返回預設值
+            }
         }
 
         public bool CreateHandoverSheetMain(HandoverSheetMain newHandoverSheetMain)
@@ -83,6 +135,18 @@ namespace handover_api.Service
             return;
         }
 
+        public void InActiveHandoverSheetMain(int sheetID)
+        {
+            var updateSheetMain =_dbContext.HandoverSheetMains.Where(m => m.SheetId == sheetID).FirstOrDefault();
+            if (updateSheetMain != null)
+            {
+                updateSheetMain.IsActive = false;
+                // 將更改應用到資料庫
+                _dbContext.SaveChanges();
+            }
+            return;
+        }
+
         public List<HandoverSheetGroup> GetAllHandoverSheetGroup()
         {
             return _dbContext.HandoverSheetGroups.ToList();
@@ -93,10 +157,10 @@ namespace handover_api.Service
             var updatedHandoverSheetGroupList = new List<HandoverSheetGroup>();
             updateHandoverSheetGroupList.ForEach(updateHandoverSheetGroup =>
             {
-                var existingSheetGroup = _dbContext.HandoverSheetRows.Find(updateHandoverSheetGroup.SheetGroupId);
+                var existingSheetGroup = _dbContext.HandoverSheetGroups.Where(group=>group.SheetGroupId==updateHandoverSheetGroup.SheetGroupId).FirstOrDefault();
                 if (existingSheetGroup != null)
                 {
-                    // 使用 SetValues 來只更新不為 null 的屬性
+                    _mapper.Map(existingSheetGroup, updateHandoverSheetGroup);
                     _dbContext.Entry(existingSheetGroup).CurrentValues.SetValues(updateHandoverSheetGroup);
                     updatedHandoverSheetGroupList.Add(updateHandoverSheetGroup);
                 }
@@ -106,11 +170,27 @@ namespace handover_api.Service
             return updatedHandoverSheetGroupList;
         }
 
-        public HandoverSheetGroup CreateHandoverSheetGroup(HandoverSheetGroup newHandoverSheetGroup)
+        public bool CreateHandoverSheetGroup(HandoverSheetGroup newHandoverSheetGroup)
         {
-            _dbContext.HandoverSheetGroups.Add(newHandoverSheetGroup);
-            _dbContext.SaveChanges(true);
-            return newHandoverSheetGroup;
+            using var scope = new TransactionScope();
+            try
+            {
+                var newSheetGroupId = GetMaxSheetGroupId(newHandoverSheetGroup.MainSheetId.Value);
+                newHandoverSheetGroup.SheetGroupId = newSheetGroupId + 1;
+                newHandoverSheetGroup.Id = Guid.NewGuid().ToString();
+                _dbContext.HandoverSheetGroups.Add(newHandoverSheetGroup);
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[CreateHandoverSheetGroup]：{msg}", ex.Message);
+                return false;
+            }
         }
 
         public void DeleteHandoverSheetGroup(int sheetGroudId)
@@ -121,6 +201,19 @@ namespace handover_api.Service
 
             // 將更改應用到資料庫
             _dbContext.SaveChanges();
+            return;
+        }
+
+        public void InActiveHandoverSheetGroup(int sheetGroudId)
+        {
+            var updateSheetMain = _dbContext.HandoverSheetGroups.Where(m => m.SheetGroupId == sheetGroudId).FirstOrDefault();
+            if (updateSheetMain != null)
+            {
+                updateSheetMain.IsActive = false;
+                // 將更改應用到資料庫
+                _dbContext.SaveChanges();
+            }
+            
             return;
         }
 
@@ -147,11 +240,28 @@ namespace handover_api.Service
             return updatedHandoverSheetRowList;
         }
 
-        public HandoverSheetRow CreateHandoverSheetRow(HandoverSheetRow newHandoverSheetRow)
+        public bool CreateHandoverSheetRow(HandoverSheetRow newHandoverSheetRow)
         {
-            _dbContext.HandoverSheetRows.Add(newHandoverSheetRow);
-            _dbContext.SaveChanges(true);
-            return newHandoverSheetRow;
+            using var scope = new TransactionScope();
+            try
+            {
+                var newSheetRowId = GetMaxSheetRowId(newHandoverSheetRow.MainSheetId,newHandoverSheetRow.SheetGroupId);
+                newHandoverSheetRow.SheetRowId= newSheetRowId + 1;
+                newHandoverSheetRow.Id = Guid.NewGuid().ToString();
+                _dbContext.HandoverSheetRows.Add(newHandoverSheetRow);
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[CreateHandoverSheetRow]：{msg}", ex.Message);
+                return false;
+            }
+            
         }
 
         public void DeleteHandoverSheetRow(int sheetRowId)
@@ -166,6 +276,18 @@ namespace handover_api.Service
             return;
         }
 
+        public void InActiveHandoverSheetRow(int sheetRowId)
+        {
+            var updateSheetRow = _dbContext.HandoverSheetRows.Where(m => m.SheetRowId == sheetRowId).FirstOrDefault();
+            if (updateSheetRow != null)
+            {
+                updateSheetRow.IsActive = false;
+                // 將更改應用到資料庫
+                _dbContext.SaveChanges();
+            }
+
+            return;
+        }
 
         public List<SheetSetting> GetAllSettings()
         {

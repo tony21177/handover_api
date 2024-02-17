@@ -23,6 +23,10 @@ namespace handover_api.Controllers
         private readonly HandoverService _handoverService;
         private readonly IValidator<CreateOrUpdateSheetSettingMainRequest> _createSheetSettingMainRequestValidator;
         private readonly IValidator<CreateOrUpdateSheetSettingMainRequest> _updateSheetSettingMainRequestValidator;
+        private readonly IValidator<CreateOrUpdateSheetSettingGroupRequest> _createSheetSettingGroupRequestValidator;
+        private readonly IValidator<CreateOrUpdateSheetSettingGroupRequest> _updateSheetSettingGroupRequestValidator;
+        private readonly IValidator<CreateOrUpdateSheetSettingRowRequest> _createSheetSettingRowRequestValidator;
+        private readonly IValidator<CreateOrUpdateSheetSettingRowRequest> _updateSheetSettingRowRequestValidator;
         private readonly FileUploadService _fileUploadService;
 
         public SheetSettingController(IMapper mapper, ILogger<SheetSettingController> logger, AuthHelpers authHelpers, HandoverService handoverService, FileUploadService fileUploadService)
@@ -33,6 +37,10 @@ namespace handover_api.Controllers
             _handoverService = handoverService;
             _createSheetSettingMainRequestValidator = new CreateOrUpdateSheetSettingMainRequestValidator(ActionTypeEnum.Create);
             _updateSheetSettingMainRequestValidator = new CreateOrUpdateSheetSettingMainRequestValidator(ActionTypeEnum.Update);
+            _createSheetSettingGroupRequestValidator = new CreateOrUpdateSheetSettingGroupRequestValidator(ActionTypeEnum.Create,handoverService);
+            _updateSheetSettingGroupRequestValidator = new CreateOrUpdateSheetSettingGroupRequestValidator(ActionTypeEnum.Update, handoverService);
+            _createSheetSettingRowRequestValidator = new CreateOrUpdateSheetSettingRowRequestValidator(ActionTypeEnum.Create, handoverService);
+            _updateSheetSettingRowRequestValidator = new CreateOrUpdateSheetSettingRowRequestValidator(ActionTypeEnum.Update, handoverService);
             _fileUploadService = fileUploadService;
         }
 
@@ -161,7 +169,166 @@ namespace handover_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            _handoverService.DeleteHandoverSheetMain(sheetId);
+            _handoverService.InActiveHandoverSheetMain(sheetId);
+
+            var response = new CommonResponse<dynamic>()
+            {
+                Result = true,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("Group/create")]
+        [Authorize]
+        public IActionResult CreateSettingGroup(CreateOrUpdateSheetSettingGroupRequest createSettingGroupRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || memberAndPermissionSetting.Member == null || permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var validationResult = _createSheetSettingGroupRequestValidator.Validate(createSettingGroupRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+            var newSettingGroup = _mapper.Map<HandoverSheetGroup>(createSettingGroupRequest);
+            newSettingGroup.CreatorName = memberAndPermissionSetting.Member.DisplayName;
+            var result = _handoverService.CreateHandoverSheetGroup(newSettingGroup);
+            var response = new CommonResponse<HandoverSheetGroup>()
+            {
+                Result = result,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("Group/update")]
+        [Authorize]
+        public IActionResult UpdateSettingGroup(CreateOrUpdateSheetSettingGroupRequest updateSettingGroupRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (permissionSetting == null || !permissionSetting.IsUpdateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+           
+            var validationResult = _updateSheetSettingGroupRequestValidator.Validate(updateSettingGroupRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var updateSettingGroup = _mapper.Map<HandoverSheetGroup>(updateSettingGroupRequest);
+            var data = _handoverService.UpdateHandoverSheetGroups(new List<HandoverSheetGroup>() { updateSettingGroup });
+            var response = new CommonResponse<HandoverSheetGroup>()
+            {
+                Result = true,
+                Message = "",
+                Data = data[0]
+            };
+            return Ok(response);
+        }
+
+        [HttpDelete("Group/delete/{sheetGroupId}")]
+        [Authorize]
+        public IActionResult DeleteGroup(int sheetGroupId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsDeleteHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            _handoverService.InActiveHandoverSheetGroup(sheetGroupId);
+
+            var response = new CommonResponse<dynamic>()
+            {
+                Result = true,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("Row/create")]
+        [Authorize]
+        public IActionResult CreateSettingRow(CreateOrUpdateSheetSettingRowRequest createSettingRowRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || memberAndPermissionSetting.Member == null || permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var validationResult = _createSheetSettingRowRequestValidator.Validate(createSettingRowRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+
+            var newSettingRow = _mapper.Map<HandoverSheetRow>(createSettingRowRequest);
+            var result = _handoverService.CreateHandoverSheetRow(newSettingRow);
+            var response = new CommonResponse<HandoverSheetGroup>()
+            {
+                Result = result,
+                Message = "",
+                Data = null
+            };
+            return Ok(response);
+        }
+
+        [HttpPost("Group/update")]
+        [Authorize]
+        public IActionResult UpdateSettingRow(CreateOrUpdateSheetSettingRowRequest updateSettingRowRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (permissionSetting == null || !permissionSetting.IsUpdateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            var validationResult = _updateSheetSettingRowRequestValidator.Validate(updateSettingRowRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var updateSettingRow = _mapper.Map<HandoverSheetRow>(updateSettingRowRequest);
+            var data = _handoverService.UpdateHandoverSheetRows(new List<HandoverSheetRow>() { updateSettingRow });
+            var response = new CommonResponse<HandoverSheetRow>()
+            {
+                Result = true,
+                Message = "",
+                Data = data[0]
+            };
+            return Ok(response);
+        }
+
+        [HttpDelete("Group/delete/{sheetGroupId}")]
+        [Authorize]
+        public IActionResult DeleteGroup(int sheetGroupId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || permissionSetting == null || !permissionSetting.IsDeleteHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            _handoverService.InActiveHandoverSheetGroup(sheetGroupId);
 
             var response = new CommonResponse<dynamic>()
             {

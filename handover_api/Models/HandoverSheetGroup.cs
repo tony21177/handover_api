@@ -25,7 +25,7 @@ public partial class HandoverSheetGroup
     /// handover_sheet_main.SheetID
     /// </summary>
     [Column("MainSheetID")]
-    public int MainSheetId { get; set; }
+    public int? MainSheetId { get; set; }
 
     /// <summary>
     /// GUID
