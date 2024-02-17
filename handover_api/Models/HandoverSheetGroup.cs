@@ -12,7 +12,6 @@ namespace handover_api.Models;
 /// 交班表主表底下組別
 /// </summary>
 [Table("handover_sheet_group")]
-[Index("GroupRank", Name = "GroupRank_UNIQUE", IsUnique = true)]
 [Index("SheetGroupId", Name = "SheetGroupID_UNIQUE", IsUnique = true)]
 public partial class HandoverSheetGroup
 {

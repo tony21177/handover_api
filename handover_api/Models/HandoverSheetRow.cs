@@ -24,15 +24,14 @@ public partial class HandoverSheetRow
     /// handover_sheet_main.SheetID
     /// </summary>
     [Column("MainSheetID")]
-    public int MainSheetId { get; set; }
+    public int? MainSheetId { get; set; }
 
     /// <summary>
     /// handover_sheet_group.SheetGroupID
     /// </summary>
     [Column("SheetGroupID")]
-    public int SheetGroupId { get; set; }
+    public int? SheetGroupId { get; set; }
 
- 
     [Column("SheetRowID")]
     public int SheetRowId { get; set; }
 
@@ -71,6 +70,12 @@ public partial class HandoverSheetRow
 
     [StringLength(1000)]
     public string Remarks { get; set; }
+
+    [StringLength(100)]
+    public string CreatorName { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
 
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedTime { get; set; }

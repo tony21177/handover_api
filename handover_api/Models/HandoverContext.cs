@@ -150,9 +150,9 @@ public partial class HandoverContext : DbContext
             entity.ToTable("handover_sheet_row", tb => tb.HasComment("交班表組別底下的Row資料"));
 
             entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.MainSheetId).HasComment("handover_sheet_main.SheetID");
             entity.Property(e => e.SheetGroupId).HasComment("handover_sheet_group.SheetGroupID");
-            entity.Property(e => e.SheetRowId).HasComment("GUID");
             entity.Property(e => e.UpdatedTime)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
