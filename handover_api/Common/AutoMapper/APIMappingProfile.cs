@@ -72,6 +72,16 @@ namespace MaiBackend.Common.AutoMapper
                 .ForMember(dest => dest.CreatedTime, opt => opt.MapFrom(src => src.CreatedTime != null ? ConvertToUnixTimestamp(src.CreatedTime) : (long?)null))
                 .ForMember(dest => dest.UpdatedTime, opt => opt.MapFrom(src => src.UpdatedTime != null ? ConvertToUnixTimestamp(src.UpdatedTime) : (long?)null))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<AnnouncementHistory, AnnouncementHistoryDetail>()
+                .ForMember(dest => dest.NewBeginPublishTime, opt => opt.MapFrom(src => FormatDateString(src.NewBeginPublishTime)))
+                .ForMember(dest => dest.OldBeginPublishTime, opt => opt.MapFrom(src => FormatDateString(src.OldBeginPublishTime)))
+                .ForMember(dest => dest.NewEndPublishTime, opt => opt.MapFrom(src => FormatDateString(src.NewEndPublishTime)))
+                .ForMember(dest => dest.OldEndPublishTime, opt => opt.MapFrom(src => FormatDateString(src.OldEndPublishTime)))
+                .ForMember(dest => dest.NewBeginViewTime, opt => opt.MapFrom(src => FormatDateString(src.NewBeginViewTime)))
+                .ForMember(dest => dest.OldBeginViewTime, opt => opt.MapFrom(src => FormatDateString(src.OldBeginViewTime)))
+                .ForMember(dest => dest.NewEndViewTime, opt => opt.MapFrom(src => FormatDateString(src.NewEndViewTime)))
+                .ForMember(dest => dest.OldEndViewTime, opt => opt.MapFrom(src => FormatDateString(src.OldEndViewTime)))
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
         //public Dictionary<string, object>? MapSchema(ColumnDefinition src)
@@ -115,6 +125,16 @@ namespace MaiBackend.Common.AutoMapper
             if (dateTime == null) return 0;
             DateTimeOffset dateTimeOffset = new DateTimeOffset((DateTime)dateTime);
             return dateTimeOffset.ToUnixTimeMilliseconds();
+        }
+
+        public static string? FormatDateString(DateTime? dateTime)
+        {
+            CultureInfo culture = new("zh-TW");
+            if (dateTime.HasValue)
+            {
+                return dateTime.Value.ToString("yyy/MM/dd", culture);
+            }
+            return null;
         }
     }
 }

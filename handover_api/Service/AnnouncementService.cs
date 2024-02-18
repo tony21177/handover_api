@@ -1,4 +1,5 @@
-﻿using handover_api.Controllers.Request;
+﻿using handover_api.Common.Constant;
+using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
@@ -147,6 +148,9 @@ namespace handover_api.Service
                     {
                         UpdateAnnounceAttachments(attIdList, announcement.AnnounceId, announcement.CreatorId);
                     }
+
+                    AddAnnouncementHistory(null, announcement, new List<string> { }, readerUserIdList, new List<string> { }, attIdList, AnnoucementActionEnum.Create);
+
                     // 保存更改到資料庫
                     _dbContext.SaveChanges();
 
@@ -168,96 +172,108 @@ namespace handover_api.Service
             return announcement;
         }
 
-        public bool UpdateAnnouncement(string announceId, Announcement newAnnouncement, Announcement originalAnnouncement, List<AnnouceReader> annouceReaders, UpdateAnnouncementRequest updateAnnouncementRequest, List<AnnounceAttachment> announceAttachments, List<MyAnnouncement> myAnnouncements)
+        public bool UpdateAnnouncement(string announceId, Announcement newAnnouncement, Announcement originalAnnouncement, List<AnnouceReader> annouceReaders,
+            UpdateAnnouncementRequest updateAnnouncementRequest, List<AnnounceAttachment> announceAttachments, List<MyAnnouncement> myAnnouncements)
         {
-            using (var scope = new TransactionScope())
+            using var scope = new TransactionScope();
+            try
             {
-                try
+                UpdateAnnouncementByAnnounceId(newAnnouncement, announceId);
+
+                if (updateAnnouncementRequest.ReaderUserIdList != null)
                 {
-                    UpdateAnnouncementByAnnounceId(newAnnouncement, announceId);
+                    List<string> originalUserIdsInReaders = annouceReaders.Select(x => x.UserId).ToList();
+                    List<string> newUserIdsInReaders = updateAnnouncementRequest.ReaderUserIdList;
 
-                    if (updateAnnouncementRequest.ReaderUserIdList != null)
+                    List<string> userIdsOnlyInOriginalInReaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
+                    List<string> userIdsOnlyInNewInReaders = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
+
+                    List<string> originalUserIdsInMyAnnoucements = myAnnouncements.Select(x => x.UserId).ToList();
+                    List<string> newUserIdsInMyAnnoucements = updateAnnouncementRequest.ReaderUserIdList;
+
+                    List<string> userIdsOnlyInOriginalInMyAnnoucementsaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
+                    List<string> userIdsOnlyInNewInMyAnnoucementss = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
+
+
+                    //_dbContext.AnnouceReaders.Where(annouceReader => userIdsOnlyInOriginalInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
+                    //_dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
+
+                    _dbContext.AnnouceReaders.Where(annouceReader => originalUserIdsInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
+                    _dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
+                    newUserIdsInReaders.ForEach(
+                    userId =>
                     {
-                        List<string> originalUserIdsInReaders = annouceReaders.Select(x => x.UserId).ToList();
-                        List<string> newUserIdsInReaders = updateAnnouncementRequest.ReaderUserIdList;
-
-                        List<string> userIdsOnlyInOriginalInReaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
-                        List<string> userIdsOnlyInNewInReaders = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
-
-                        List<string> originalUserIdsInMyAnnoucements = myAnnouncements.Select(x => x.UserId).ToList();
-                        List<string> newUserIdsInMyAnnoucements = updateAnnouncementRequest.ReaderUserIdList;
-
-                        List<string> userIdsOnlyInOriginalInMyAnnoucementsaders = originalUserIdsInReaders.Except(newUserIdsInReaders).ToList();
-                        List<string> userIdsOnlyInNewInMyAnnoucementss = newUserIdsInReaders.Except(originalUserIdsInReaders).ToList();
-
-
-                        //_dbContext.AnnouceReaders.Where(annouceReader => userIdsOnlyInOriginalInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
-                        //_dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
-
-                        _dbContext.AnnouceReaders.Where(annouceReader => originalUserIdsInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
-                        _dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
-                        newUserIdsInReaders.ForEach(
-                        userId =>
+                        var newAnnouceReader = new AnnouceReader
                         {
-                            var newAnnouceReader = new AnnouceReader
-                            {
-                                ReaderId = Guid.NewGuid().ToString(),
-                                AnnounceId = announceId,
-                                UserId = userId, //收件人
-                                IsRead = false,
-                                IsActive = true,
-                            };
-                            _dbContext.AnnouceReaders.Add(newAnnouceReader);
-                            var myAnnouncemnet = new MyAnnouncement
-                            {
-                                Title = newAnnouncement.Title != null ? newAnnouncement.Title : originalAnnouncement.Title,
-                                Content = newAnnouncement.Content != null ? newAnnouncement.Content : originalAnnouncement.Content,
-                                BeginPublishTime = newAnnouncement.BeginPublishTime != null ? newAnnouncement.BeginPublishTime : originalAnnouncement.BeginPublishTime,
-                                EndPublishTime = newAnnouncement.EndPublishTime != null ? newAnnouncement.EndPublishTime : originalAnnouncement.EndPublishTime,
-                                BeginViewTime = newAnnouncement.BeginViewTime != null ? newAnnouncement.BeginViewTime : originalAnnouncement.BeginViewTime,
-                                EndViewTime = newAnnouncement.EndViewTime != null ? newAnnouncement.EndViewTime : originalAnnouncement.EndViewTime,
-                                IsActive = newAnnouncement.IsActive != null ? newAnnouncement.IsActive : originalAnnouncement.IsActive,
-                                AnnounceId = announceId,
-                                CreatorId = originalAnnouncement.CreatorId,
-                                UserId = userId, //收件人
-                                IsBookToTop = false,
-                                IsRemind = false,
-                            };
-                            _dbContext.MyAnnouncements.Add(myAnnouncemnet);
-                        });
-                    }
-                    if (updateAnnouncementRequest.AttIdList != null)
-                    {
-                        //UpdateAnnounceAttachments(updateAnnouncementRequest.AttIdList, announcement.AnnounceId, announcement.CreatorId);
-                        var originalAttachAttIds = announceAttachments.Select(attachment => attachment.AttId).ToList();
-                        var newAttIds = updateAnnouncementRequest.AttIdList;
-                        List<string> attIdsOnlyInOriginal = originalAttachAttIds.Except(newAttIds).ToList();
-                        List<string> attIdsOnlyInNew = newAttIds.Except(originalAttachAttIds).ToList();
-                        if (attIdsOnlyInOriginal.Count > 0)
+                            ReaderId = Guid.NewGuid().ToString(),
+                            AnnounceId = announceId,
+                            UserId = userId, //收件人
+                            IsRead = false,
+                            IsActive = true,
+                        };
+                        _dbContext.AnnouceReaders.Add(newAnnouceReader);
+                        var myAnnouncemnet = new MyAnnouncement
                         {
-                            UpdateAnnounIdToNullForAnnounceAttachment(attIdsOnlyInOriginal);
-                        }
-                        if (attIdsOnlyInNew.Count > 0)
-                        {
-                            UpdateAnnounceAttachments(attIdsOnlyInNew, announceId, originalAnnouncement.CreatorId);
-                        }
-
-                    }
-                    AddAnnouncementHistory(newAnnouncement, originalAnnouncement);
-
-                    // 保存更改到資料庫
-                    _dbContext.SaveChanges();
-
-                    // 提交事務
-                    scope.Complete();
+                            Title = newAnnouncement.Title != null ? newAnnouncement.Title : originalAnnouncement.Title,
+                            Content = newAnnouncement.Content != null ? newAnnouncement.Content : originalAnnouncement.Content,
+                            BeginPublishTime = newAnnouncement.BeginPublishTime != null ? newAnnouncement.BeginPublishTime : originalAnnouncement.BeginPublishTime,
+                            EndPublishTime = newAnnouncement.EndPublishTime != null ? newAnnouncement.EndPublishTime : originalAnnouncement.EndPublishTime,
+                            BeginViewTime = newAnnouncement.BeginViewTime != null ? newAnnouncement.BeginViewTime : originalAnnouncement.BeginViewTime,
+                            EndViewTime = newAnnouncement.EndViewTime != null ? newAnnouncement.EndViewTime : originalAnnouncement.EndViewTime,
+                            IsActive = newAnnouncement.IsActive != null ? newAnnouncement.IsActive : originalAnnouncement.IsActive,
+                            AnnounceId = announceId,
+                            CreatorId = originalAnnouncement.CreatorId,
+                            UserId = userId, //收件人
+                            IsBookToTop = false,
+                            IsRemind = false,
+                        };
+                        _dbContext.MyAnnouncements.Add(myAnnouncemnet);
+                    });
                 }
-                catch (Exception ex)
+                if (updateAnnouncementRequest.AttIdList != null)
                 {
-                    // 處理事務失敗的例外
-                    // 這裡可以根據實際需求進行錯誤處理
-                    _logger.LogError("事務失敗：{msg}", ex.Message);
-                    return false;
+                    //UpdateAnnounceAttachments(updateAnnouncementRequest.AttIdList, announcement.AnnounceId, announcement.CreatorId);
+                    var originalAttachAttIds = announceAttachments.Select(attachment => attachment.AttId).ToList();
+                    var newAttIds = updateAnnouncementRequest.AttIdList;
+                    List<string> attIdsOnlyInOriginal = originalAttachAttIds.Except(newAttIds).ToList();
+                    List<string> attIdsOnlyInNew = newAttIds.Except(originalAttachAttIds).ToList();
+                    if (attIdsOnlyInOriginal.Count > 0)
+                    {
+                        UpdateAnnounIdToNullForAnnounceAttachment(attIdsOnlyInOriginal);
+                    }
+                    if (attIdsOnlyInNew.Count > 0)
+                    {
+                        UpdateAnnounceAttachments(attIdsOnlyInNew, announceId, originalAnnouncement.CreatorId);
+                    }
+
                 }
+                List<string> oldReaderUserIdList = annouceReaders.Select(reader => reader.UserId).ToList();
+                List<string> newReaderUserIdList = oldReaderUserIdList;
+                if (updateAnnouncementRequest.ReaderUserIdList != null)
+                {
+                    newReaderUserIdList = updateAnnouncementRequest.ReaderUserIdList;
+                }
+                List<string> oldAttIdList = announceAttachments.Select(attachment => attachment.AttId).ToList();
+                List<string> newAttIdList = oldAttIdList;
+                if (updateAnnouncementRequest.AttIdList != null)
+                {
+                    newAttIdList = updateAnnouncementRequest.AttIdList;
+                }
+
+                AddAnnouncementHistory(originalAnnouncement, newAnnouncement, oldReaderUserIdList, newReaderUserIdList, oldAttIdList, newAttIdList, AnnoucementActionEnum.Update);
+
+                // 保存更改到資料庫
+                _dbContext.SaveChanges();
+
+                // 提交事務
+                scope.Complete();
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗：{msg}", ex.Message);
+                return false;
             }
 
             return true;
@@ -324,7 +340,7 @@ namespace handover_api.Service
         {
             return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId && myAnnouncement.UserId == userId).FirstOrDefault();
         }
-        public List<MyAnnouncement> GetMyAnnouncementsByUserId( string userId)
+        public List<MyAnnouncement> GetMyAnnouncementsByUserId(string userId)
         {
             return _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.UserId == userId).ToList();
         }
@@ -414,11 +430,16 @@ namespace handover_api.Service
                 var announcement = _dbContext.Announcements.Where(_announcement => _announcement.AnnounceId == announceId).FirstOrDefault();
                 if (announcement != null)
                 {
-                    var announceReaderList = _dbContext.AnnouceReaders.Where(annouceReader=> annouceReader.AnnounceId==announceId).ToList();
+                    var announceReaderList = _dbContext.AnnouceReaders.Where(annouceReader => annouceReader.AnnounceId == announceId).ToList();
                     var myAnnouncementList = _dbContext.MyAnnouncements.Where(myAnnouncement => myAnnouncement.AnnounceId == announceId).ToList();
+                    var attachments = _dbContext.AnnounceAttachments.Where(attachment => attachment.AnnounceId == announceId).ToList();
                     announceReaderList.ForEach(annouceReader => annouceReader.IsActive = false);
                     myAnnouncementList.ForEach(myAnnouncement => myAnnouncement.IsActive = false);
+                    var readerUserIdList = announceReaderList.Select(r => r.UserId).ToList();
+                    var attIdList = attachments.Select(a => a.AttId).ToList();
+                    InActiveAnnoucementHistory(announcement, attIdList, readerUserIdList);
                     announcement.IsActive = false;
+
                 }
 
                 // Save changes to the database
@@ -494,35 +515,73 @@ namespace handover_api.Service
             _dbContext.Database.ExecuteSqlRaw(updateSql);
         }
 
-        public void AddAnnouncementHistory(Announcement newAnnouncement, Announcement originalAnnouncement)
+        public void InActiveAnnoucementHistory(Announcement originalAnnouncement, List<string> attIdList, List<string> readerUserIdList)
         {
             var newAnnounceHistory = new AnnouncementHistory
             {
                 OldTitle = originalAnnouncement.Title,
-                NewTitle = newAnnouncement.Title,
+                NewTitle = originalAnnouncement.Title,
                 OldContent = originalAnnouncement.Content,
-                NewContent = newAnnouncement.Content,
+                NewContent = originalAnnouncement.Content,
                 OldBeginPublishTime = originalAnnouncement.BeginPublishTime,
-                NewBeginPublishTime = newAnnouncement.BeginPublishTime,
+                NewBeginPublishTime = originalAnnouncement.BeginPublishTime,
                 OldEndPublishTime = originalAnnouncement.EndPublishTime,
-                NewEndPublishTime = newAnnouncement.EndPublishTime,
+                NewEndPublishTime = originalAnnouncement.EndPublishTime,
                 OldBeginViewTime = originalAnnouncement.BeginViewTime,
-                NewBeginViewTime = newAnnouncement.BeginViewTime,
+                NewBeginViewTime = originalAnnouncement.BeginViewTime,
                 OldEndViewTime = originalAnnouncement.EndViewTime,
-                NewEndViewTime = newAnnouncement.EndViewTime,
-                OldIsActive = originalAnnouncement.IsActive ?? true,
-                NewIsActive = newAnnouncement.IsActive,
+                NewEndViewTime = originalAnnouncement.EndViewTime,
+                OldIsActive = originalAnnouncement.IsActive,
+                NewIsActive = false,
                 CreatorId = originalAnnouncement.CreatorId,
                 CreatorName = originalAnnouncement.CreatorName,
-                AnnounceId = originalAnnouncement.AnnounceId
+                AnnounceId = originalAnnouncement.AnnounceId,
+                OldAttId = string.Join(",", attIdList),
+                NewAttId = string.Join(",", attIdList),
+                OldReaderUserIdList = string.Join(",", readerUserIdList),
+                NewReaderUserIdList = string.Join(",", readerUserIdList),
+                Action = AnnoucementActionEnum.InActive.ToString(),
             };
 
             _dbContext.AnnouncementHistories.Add(newAnnounceHistory);
         }
 
-        public bool IsUserReadAnnouncement(String announcementId,String userId)
+        public void AddAnnouncementHistory(Announcement? originalAnnouncement, Announcement newAnnouncement,
+            List<string> oldReaderUserIdList, List<string> newReaderUserIdList,
+            List<string> oldAttId, List<string> newAttId, AnnoucementActionEnum actionEnum)
         {
-            var annoucementReader = _dbContext.AnnouceReaders.Where(annouceReader=>annouceReader.UserId==userId&&annouceReader.AnnounceId==announcementId).FirstOrDefault();
+            var newAnnounceHistory = new AnnouncementHistory
+            {
+                OldTitle = originalAnnouncement?.Title ?? null,
+                NewTitle = newAnnouncement.Title,
+                OldContent = originalAnnouncement?.Content ?? null,
+                NewContent = newAnnouncement.Content,
+                OldBeginPublishTime = originalAnnouncement?.BeginPublishTime ?? null,
+                NewBeginPublishTime = newAnnouncement.BeginPublishTime,
+                OldEndPublishTime = originalAnnouncement?.EndPublishTime ?? null,
+                NewEndPublishTime = newAnnouncement.EndPublishTime,
+                OldBeginViewTime = originalAnnouncement?.BeginViewTime ?? null,
+                NewBeginViewTime = newAnnouncement.BeginViewTime,
+                OldEndViewTime = originalAnnouncement?.EndViewTime ?? null,
+                NewEndViewTime = newAnnouncement.EndViewTime,
+                OldIsActive = originalAnnouncement?.IsActive ?? null,
+                NewIsActive = newAnnouncement.IsActive,
+                CreatorId = originalAnnouncement?.CreatorId ?? newAnnouncement.CreatorId,
+                CreatorName = originalAnnouncement?.CreatorName ?? newAnnouncement.CreatorName,
+                AnnounceId = originalAnnouncement?.AnnounceId ?? newAnnouncement.AnnounceId,
+                OldAttId = string.Join(",", oldAttId),
+                NewAttId = string.Join(",", newAttId),
+                OldReaderUserIdList = string.Join(",", oldReaderUserIdList),
+                NewReaderUserIdList = string.Join(",", newReaderUserIdList),
+                Action = actionEnum.ToString(),
+            };
+
+            _dbContext.AnnouncementHistories.Add(newAnnounceHistory);
+        }
+
+        public bool IsUserReadAnnouncement(String announcementId, String userId)
+        {
+            var annoucementReader = _dbContext.AnnouceReaders.Where(annouceReader => annouceReader.UserId == userId && annouceReader.AnnounceId == announcementId).FirstOrDefault();
             if (annoucementReader != null)
             {
                 return annoucementReader.IsRead;
@@ -530,5 +589,11 @@ namespace handover_api.Service
             return false;
         }
 
+
+        public List<AnnouncementHistory> GetAnnouncementHistoriesByAnnounceId(string announceId)
+        {
+            var announcementHistoryList = _dbContext.AnnouncementHistories.Where(history => history.AnnounceId == announceId).OrderByDescending(history => history.Id).ToList();
+            return announcementHistoryList;
+        }
     }
 }

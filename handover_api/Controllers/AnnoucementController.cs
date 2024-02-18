@@ -7,11 +7,11 @@ using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
 using handover_api.Service;
+using handover_api.Service.ValueObject;
 using handover_api.Utils;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace handover_api.Controllers
 {
@@ -224,6 +224,60 @@ namespace handover_api.Controllers
                 Data = result
             });
         }
+        [HttpGet("history/{announceId}")]
+        [Authorize]
+        public IActionResult GetAnnouncementHistory(string announceId)
+        {
+
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+
+
+            var announcement = _announcementService.GetAnnouncementByAnnounceId(announceId);
+            if (announcement == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此公告不存在"
+                });
+            }
+
+            // Retrieve attachments based on the unique AnnounceIds
+            var attachments = _announcementService.GetAttachmentsByAnnounceIds(new List<string> { announceId });
+
+            List<AnnouceReader> annouceReaders = _announcementService.GetAnnouceReaderByAnnouncementId(announceId);
+            List<string> readerUserDisplayNameList = _memberService.GetDisplayNameByUserIdList(annouceReaders.Select(r => r.UserId).ToList());
+
+            List<AnnouncementHistory> announcementHistories = _announcementService.GetAnnouncementHistoriesByAnnounceId(announceId);
+            List<AnnouncementHistoryDetail> announcementHistoryDetails = new List<AnnouncementHistoryDetail>();
+            announcementHistories.ForEach(history =>
+            {
+                List<string> oldAttIdList = history.OldAttId.Split(",").ToList();
+                List<AnnounceAttachment> oldAttachments = _announcementService.GetAnnounceAttachmentsByAttIds(oldAttIdList);
+
+                List<string> newAttIdList = history.NewAttId.Split(",").ToList();
+                List<AnnounceAttachment> newAttachments = _announcementService.GetAnnounceAttachmentsByAttIds(newAttIdList);
+
+                List<string> oldReaderUserIdList = history.OldReaderUserIdList.Split(",").ToList();
+                List<string> oldReaderDisplayNameList = _memberService.GetDisplayNameByUserIdList(oldReaderUserIdList);
+
+                List<string> newReaderUserIdList = history.NewReaderUserIdList.Split(",").ToList();
+                List<string> newReaderDisplayNameList = _memberService.GetDisplayNameByUserIdList(newReaderUserIdList);
+
+                AnnouncementHistoryDetail historyDeatil = _mapper.Map<AnnouncementHistoryDetail>(history);
+                historyDeatil.OldAttachmentList = oldAttachments;
+                historyDeatil.NewAttachmentList = newAttachments;
+                historyDeatil.OldReaderNames = string.Join(",", oldReaderDisplayNameList);
+                historyDeatil.NewReaderNames = string.Join(",", newReaderDisplayNameList);
+                announcementHistoryDetails.Add(historyDeatil);
+            });
+            return Ok(new CommonResponse<List<AnnouncementHistoryDetail>>
+            {
+                Result = true,
+                Data = announcementHistoryDetails
+            });
+        }
 
         private List<AnnouceReaderMemberDto> GetAnnounceReaderMemberDtoList(String announceId)
         {
@@ -345,7 +399,7 @@ namespace handover_api.Controllers
                 var creator = _memberService.GetMemberByUserId(creatorId);
                 myAnnouncementsWithAttachDto.CreatorName = creator?.DisplayName;
 
-                var isRead = _announcementService.IsUserReadAnnouncement(myAnnouncement.AnnounceId,loginMemberAndPermission.Member.UserId);
+                var isRead = _announcementService.IsUserReadAnnouncement(myAnnouncement.AnnounceId, loginMemberAndPermission.Member.UserId);
                 myAnnouncementsWithAttachDto.IsRead = isRead;
                 myAnnouncementsWithAttachList.Add(myAnnouncementsWithAttachDto);
             });

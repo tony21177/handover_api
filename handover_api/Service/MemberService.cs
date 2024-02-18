@@ -36,6 +36,26 @@ namespace handover_api.Service
             return member;
         }
 
+        public List<string> GetDisplayNameByUserIdList(List<string> userIdList)
+        {
+            // 宣告一個空的 DisplayName 列表
+            var displayNames = new List<string>();
+
+            // 如果提供的 userIdList 不為空
+            if (userIdList != null && userIdList.Any())
+            {
+                // 從資料庫中查詢對應的 DisplayName
+                var members = _dbContext.Members
+                    .Where(member => userIdList.Contains(member.UserId)) // 篩選出指定的 UserId
+                    .ToList();
+
+                // 提取 DisplayName
+                displayNames = members.Select(member => member.DisplayName).ToList();
+            }
+
+            return displayNames;
+        }
+
         public List<Member> GetAllMembers()
         {
             return _dbContext.Members.ToList();
@@ -46,7 +66,7 @@ namespace handover_api.Service
             var result = from member in _dbContext.Members
                          join authLayer in _dbContext.Authlayers
                          on member.AuthValue equals authLayer.AuthValue
-                         where member.IsActive==true
+                         where member.IsActive == true
                          select new Recipient
                          {
                              UserId = member.UserId,
@@ -91,8 +111,8 @@ namespace handover_api.Service
 
         public bool IsAccountNotExist(string account)
         {
-           var existMemeber =  _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
-            if (existMemeber==null)
+            var existMemeber = _dbContext.Members.Where(member => member.Account == account).FirstOrDefault();
+            if (existMemeber == null)
             {
                 return true;
             }

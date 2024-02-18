@@ -54,7 +54,7 @@ public partial class AnnouncementHistory
     [Column(TypeName = "datetime")]
     public DateTime? NewEndViewTime { get; set; }
 
-    public bool OldIsActive { get; set; }
+    public bool? OldIsActive { get; set; }
 
     public bool? NewIsActive { get; set; }
 
@@ -73,4 +73,22 @@ public partial class AnnouncementHistory
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedTime { get; set; }
+
+    [Column("OldAttID")]
+    [StringLength(100)]
+    public string OldAttId { get; set; }
+
+    [Column("NewAttID")]
+    [StringLength(100)]
+    public string NewAttId { get; set; }
+
+    [StringLength(2000)]
+    public string OldReaderUserIdList { get; set; }
+
+    [StringLength(2000)]
+    public string NewReaderUserIdList { get; set; }
+
+    [Required]
+    [StringLength(45)]
+    public string Action { get; set; }
 }
