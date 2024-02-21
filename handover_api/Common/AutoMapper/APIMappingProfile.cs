@@ -45,8 +45,13 @@ namespace MaiBackend.Common.AutoMapper
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<MyAnnouncement, MyAnnouncementWithAttachmentsDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+
             CreateMap<HandoverSheetMain, SheetSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             // 目標為null才複製過去
             CreateMap<HandoverSheetMain, HandoverSheetMain>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
@@ -55,8 +60,7 @@ namespace MaiBackend.Common.AutoMapper
             CreateMap<HandoverSheetRow, HandoverSheetRow>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
 
-            CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            
             CreateMap<CreateOrUpdateSheetSettingMainRequest, HandoverSheetMain>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateOrUpdateSheetSettingGroupRequest, HandoverSheetGroup>()
@@ -82,6 +86,15 @@ namespace MaiBackend.Common.AutoMapper
                 .ForMember(dest => dest.NewEndViewTime, opt => opt.MapFrom(src => FormatDateString(src.NewEndViewTime)))
                 .ForMember(dest => dest.OldEndViewTime, opt => opt.MapFrom(src => FormatDateString(src.OldEndViewTime)))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            //交班內容
+            CreateMap<HandoverSheetMain, HandoverSheetRowDetailAndSettings>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetGroup, GroupSetting>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetRow, RowSettingAndDetail>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
+
         }
 
         //public Dictionary<string, object>? MapSchema(ColumnDefinition src)

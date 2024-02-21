@@ -25,6 +25,10 @@ public partial class HandoverContext : DbContext
 
     public virtual DbSet<FileDetailInfo> FileDetailInfos { get; set; }
 
+    public virtual DbSet<HandoverDetail> HandoverDetails { get; set; }
+
+    public virtual DbSet<HandoverDetailReader> HandoverDetailReaders { get; set; }
+
     public virtual DbSet<HandoverSheetGroup> HandoverSheetGroups { get; set; }
 
     public virtual DbSet<HandoverSheetMain> HandoverSheetMains { get; set; }
@@ -109,6 +113,26 @@ public partial class HandoverContext : DbContext
 
             entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CreatorId).HasComment("member.UserID");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverDetail>(entity =>
+        {
+            entity.HasKey(e => e.HandoverDetailId).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverDetailReader>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedTime)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
@@ -318,6 +319,21 @@ namespace handover_api.Service
                 settingDto.HandoverSheetGroupList = matchedSheetGroupDtoList;
             });
             return sheetSettingDtoList;
+        }
+
+        // 要保證進來的rowDetails都屬於同一個handoverSheetMain
+        public string? CreateHandOverDetail(List<RowDetail> rowDetails,List<string> rederUserIds)
+        {
+            if (rowDetails.Count == 0) { return null; }
+
+            int mainSheetId = rowDetails[0].HandoverSheetRowSetting.MainSheetId.Value;
+            var mainSheetSetting = GetSheetMainByMainSheetId(mainSheetId);
+
+
+            HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = _mapper.Map<HandoverSheetRowDetailAndSettings>(mainSheetSetting);
+
+
+
         }
     }
 }
