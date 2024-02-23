@@ -15,7 +15,9 @@ public partial class HandoverDetailReader
     [Column("id")]
     public int Id { get; set; }
 
-    public int HandoverDetailId { get; set; }
+    [Required]
+    [StringLength(100)]
+    public string HandoverDetailId { get; set; }
 
     [Required]
     [StringLength(45)]

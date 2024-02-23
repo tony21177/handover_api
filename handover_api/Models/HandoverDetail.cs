@@ -12,13 +12,8 @@ namespace handover_api.Models;
 public partial class HandoverDetail
 {
     [Key]
-    public int HandoverDetailId { get; set; }
-
-    [Column("SheetRowID")]
-    public int SheetRowId { get; set; }
-
-    [Column("SheetGroupID")]
-    public int SheetGroupId { get; set; }
+    [StringLength(100)]
+    public string HandoverDetailId { get; set; }
 
     [Column("MainSheetID")]
     public int MainSheetId { get; set; }

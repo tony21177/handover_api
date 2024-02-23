@@ -4,9 +4,9 @@ namespace handover_api.Controllers.Request
 {
     public class CreateOrUpdateHandoverDetailRequest
     {
-        public List<RowDetail> rowDetails = new List<RowDetail>();
+        public List<RowDetail> rowDetails { get; set; } = new List<RowDetail>();
 
-        public List<string> readerUserIds = new List<String>();
+        public List<string> readerUserIds { get; set; } = new List<String>();
     }
 
     public class RowDetail
@@ -15,6 +15,6 @@ namespace handover_api.Controllers.Request
         public string Status { get; set; }
         public string? Comment { get; set; }
 
-        public HandoverSheetRow HandoverSheetRowSetting { get; set; }
+        public HandoverSheetRow? HandoverSheetRowSetting { get; set; }
     }
 }

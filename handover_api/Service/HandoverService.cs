@@ -3,6 +3,7 @@ using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using System.Transactions;
 
 namespace handover_api.Service
@@ -35,7 +36,31 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetGroups.Where(g => g.SheetGroupId == sheetGroupId).FirstOrDefault();
         }
 
-        
+        public List<HandoverSheetGroup> GetSheetGroupByMainSheetId(int mainSheetId)
+        {
+            return _dbContext.HandoverSheetGroups.Where(g => g.MainSheetId == mainSheetId).ToList();
+        }
+
+        public List<HandoverSheetRow> GetSheetRowsByMainSheetIdAndInSheetGroupIds(int mainSheetId, List<int> sheetGroupId)
+        {
+            return _dbContext.HandoverSheetRows.Where(r=>r.MainSheetId==mainSheetId&&r.SheetGroupId.HasValue &&sheetGroupId.Contains(r.SheetGroupId.Value)).ToList();
+        }
+
+        public List<HandoverSheetMain> GetSheetMainListBySheetRowIdList(List<int> sheetRowIdList)
+        {
+            List<HandoverSheetRow> handoverSheetRows = _dbContext.HandoverSheetRows.Where(row=>sheetRowIdList.Contains(row.SheetRowId)).ToList();
+
+            List<int> mainSheetIdList = handoverSheetRows.Select(row=>row.MainSheetId.Value).ToList() ;
+
+            return _dbContext.HandoverSheetMains.Where(m => mainSheetIdList.Contains(m.SheetId)).ToList();
+        }
+
+        public List<HandoverSheetRow> GetSheetRowsByMainSheetId(int mainSheetId)
+        {
+            return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId==mainSheetId).ToList();
+        }
+
+
         public List<HandoverSheetMain> UpdateHandoverSheetMains(List<HandoverSheetMain> updateHandoverSheetMainList)
         {
             var updatedHandoverSheetMainList = new List<HandoverSheetMain>();
@@ -322,17 +347,97 @@ namespace handover_api.Service
         }
 
         // 要保證進來的rowDetails都屬於同一個handoverSheetMain
-        public string? CreateHandOverDetail(List<RowDetail> rowDetails,List<string> rederUserIds)
+        public string? CreateHandOverDetail(List<RowDetail> rowDetails,List<Member> readerMemberList,Member creator)
         {
             if (rowDetails.Count == 0) { return null; }
 
             int mainSheetId = rowDetails[0].HandoverSheetRowSetting.MainSheetId.Value;
             var mainSheetSetting = GetSheetMainByMainSheetId(mainSheetId);
-
+            List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(mainSheetId);
+            List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
+            List<HandoverSheetRow> handoverSheetRows = GetSheetRowsByMainSheetIdAndInSheetGroupIds(mainSheetId, inSheetGroupIdList);
 
             HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = _mapper.Map<HandoverSheetRowDetailAndSettings>(mainSheetSetting);
+            List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
+            List<RowSettingAndDetail> rowSettingAndDetails = _mapper.Map<List<RowSettingAndDetail>>(handoverSheetRows);
+
+            // 補齊handoverSheetRowDetailAndSettings欄位
+            List<Reader> readers = readerMemberList.Select(m =>
+            {
+                return new Reader
+                {
+                    UserId = m.UserId,
+                    Name = m.DisplayName,
+                    IsRead = false
+                };
+            }).ToList();
+            handoverSheetRowDetailAndSettings.readers = readers;
+            handoverSheetRowDetailAndSettings.HandoverSheetGroupList = groupSettings;
+
+            // 補齊handoverSheetRowDetailAndSettings.HandoverSheetGroupLis欄位
+            handoverSheetRowDetailAndSettings.HandoverSheetGroupList.ForEach(group =>
+            {
+                // 補齊RowSettingAndDetail欄位
+                var matchedRowSettingAndDetailList = rowSettingAndDetails.FindAll(r => r.SheetGroupId == group.SheetGroupId);
+                matchedRowSettingAndDetailList.ForEach(row =>
+                {
+                    var matchedRowDetail = rowDetails.Find(rd => rd.SheetRowId == row.SheetRowId);
+                    if (matchedRowDetail != null)
+                    {
+                        row.Status = matchedRowDetail.Status;
+                        row.Comment = matchedRowDetail.Comment;
+                    }
+                    else
+                    {
+                        _logger.LogError("[CreateHandOverDetail] 區少row  setting:rowId={rowId}的交班資料", row.SheetRowId);
+                    }
+                });
+                group.RowSettingAndDetailList = matchedRowSettingAndDetailList;
+            });
+
+            string jsonContent = JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
+
+            // 新增handover_detail
+            HandoverDetail newHandoverDetail = new HandoverDetail
+            {
+                HandoverDetailId = Guid.NewGuid().ToString(),
+                MainSheetId = mainSheetId,
+                JsonContent = jsonContent,
+                CreatorId = creator.UserId,
+                CreatorName = creator.DisplayName
+            };
+
+            
+
+            using var scope = new TransactionScope();
+            try
+            {
+                _dbContext.HandoverDetails.Add(newHandoverDetail);
+                List<HandoverDetailReader> handoverDetailReaders =readerMemberList.Select(reader => {
+                    HandoverDetailReader handoverReader = new()
+                    {
+                        HandoverDetailId = newHandoverDetail.HandoverDetailId,
+                        UserId = reader.UserId,
+                        UserName = reader.DisplayName,
+                        IsRead = false,
 
 
+                    };
+                    return handoverReader;
+                }).ToList();
+                _dbContext.HandoverDetailReaders.AddRange(handoverDetailReaders);
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return jsonContent;
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[CreateHandOverDetail]：{msg}", ex.Message);
+                return null;
+            }
 
         }
     }

@@ -20,6 +20,11 @@ namespace handover_api.Service
             return _dbContext.Members.Where(member => member.UserId == userId).FirstOrDefault();
         }
 
+        public List<Member> GetMembersByUserIdList(List<string> userIdList)
+        {
+            return _dbContext.Members.Where(member => userIdList.Contains(member.UserId)).ToList();
+        }
+
         public List<Member> GetActiveMembersByUserIds(List<string> userIdList)
         {
             if (userIdList == null || userIdList.Count == 0)
