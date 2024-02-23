@@ -28,7 +28,7 @@ namespace handover_api.Service
 
         public HandoverSheetMain? GetSheetMainByMainSheetId(int mainSheetId)
         {
-            return _dbContext.HandoverSheetMains.Where(m=>m.SheetId==mainSheetId).FirstOrDefault();
+            return _dbContext.HandoverSheetMains.Where(m => m.SheetId == mainSheetId).FirstOrDefault();
         }
 
         public HandoverSheetGroup? GetSheetGroupBySheetGroupId(int sheetGroupId)
@@ -43,21 +43,21 @@ namespace handover_api.Service
 
         public List<HandoverSheetRow> GetSheetRowsByMainSheetIdAndInSheetGroupIds(int mainSheetId, List<int> sheetGroupId)
         {
-            return _dbContext.HandoverSheetRows.Where(r=>r.MainSheetId==mainSheetId&&r.SheetGroupId.HasValue &&sheetGroupId.Contains(r.SheetGroupId.Value)).ToList();
+            return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId && r.SheetGroupId.HasValue && sheetGroupId.Contains(r.SheetGroupId.Value)).ToList();
         }
 
         public List<HandoverSheetMain> GetSheetMainListBySheetRowIdList(List<int> sheetRowIdList)
         {
-            List<HandoverSheetRow> handoverSheetRows = _dbContext.HandoverSheetRows.Where(row=>sheetRowIdList.Contains(row.SheetRowId)).ToList();
+            List<HandoverSheetRow> handoverSheetRows = _dbContext.HandoverSheetRows.Where(row => sheetRowIdList.Contains(row.SheetRowId)).ToList();
 
-            List<int> mainSheetIdList = handoverSheetRows.Select(row=>row.MainSheetId.Value).ToList() ;
+            List<int> mainSheetIdList = handoverSheetRows.Select(row => row.MainSheetId.Value).ToList();
 
             return _dbContext.HandoverSheetMains.Where(m => mainSheetIdList.Contains(m.SheetId)).ToList();
         }
 
         public List<HandoverSheetRow> GetSheetRowsByMainSheetId(int mainSheetId)
         {
-            return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId==mainSheetId).ToList();
+            return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId).ToList();
         }
 
 
@@ -99,7 +99,7 @@ namespace handover_api.Service
         {
             var maxSheetGroupId = _dbContext.HandoverSheetGroups
                 .Where(sheetGroup => sheetGroup.MainSheetId == mainSheetId)
-                .Select(sheetGroup => (int?)sheetGroup.SheetGroupId) 
+                .Select(sheetGroup => (int?)sheetGroup.SheetGroupId)
                 .OrderByDescending(sheetGroupId => sheetGroupId)
                 .FirstOrDefault(); // 取得第一個結果或者 null
 
@@ -113,10 +113,10 @@ namespace handover_api.Service
             }
         }
 
-        public int GetMaxSheetRowId(int mainSheetId,int sheetGroupId)
+        public int GetMaxSheetRowId(int mainSheetId, int sheetGroupId)
         {
             var maxSheetRowId = _dbContext.HandoverSheetRows
-                .Where(row => row.MainSheetId==mainSheetId&&row.SheetGroupId==sheetGroupId)
+                .Where(row => row.MainSheetId == mainSheetId && row.SheetGroupId == sheetGroupId)
                 .Select(row => (int?)row.SheetRowId)
                 .OrderByDescending(rowId => rowId)
                 .FirstOrDefault(); // 取得第一個結果或者 null
@@ -169,7 +169,7 @@ namespace handover_api.Service
 
         public void InActiveHandoverSheetMain(int sheetID)
         {
-            var updateSheetMain =_dbContext.HandoverSheetMains.Where(m => m.SheetId == sheetID).FirstOrDefault();
+            var updateSheetMain = _dbContext.HandoverSheetMains.Where(m => m.SheetId == sheetID).FirstOrDefault();
             if (updateSheetMain != null)
             {
                 updateSheetMain.IsActive = false;
@@ -189,7 +189,7 @@ namespace handover_api.Service
             var updatedHandoverSheetGroupList = new List<HandoverSheetGroup>();
             updateHandoverSheetGroupList.ForEach(updateHandoverSheetGroup =>
             {
-                var existingSheetGroup = _dbContext.HandoverSheetGroups.Where(group=>group.SheetGroupId==updateHandoverSheetGroup.SheetGroupId).FirstOrDefault();
+                var existingSheetGroup = _dbContext.HandoverSheetGroups.Where(group => group.SheetGroupId == updateHandoverSheetGroup.SheetGroupId).FirstOrDefault();
                 if (existingSheetGroup != null)
                 {
                     _mapper.Map(existingSheetGroup, updateHandoverSheetGroup);
@@ -245,7 +245,7 @@ namespace handover_api.Service
                 // 將更改應用到資料庫
                 _dbContext.SaveChanges();
             }
-            
+
             return;
         }
 
@@ -278,8 +278,8 @@ namespace handover_api.Service
             using var scope = new TransactionScope();
             try
             {
-                var newSheetRowId = GetMaxSheetRowId(newHandoverSheetRow.MainSheetId.Value,newHandoverSheetRow.SheetGroupId.Value);
-                newHandoverSheetRow.SheetRowId= newSheetRowId + 1;
+                var newSheetRowId = GetMaxSheetRowId(newHandoverSheetRow.MainSheetId.Value, newHandoverSheetRow.SheetGroupId.Value);
+                newHandoverSheetRow.SheetRowId = newSheetRowId + 1;
                 newHandoverSheetRow.Id = Guid.NewGuid().ToString();
                 _dbContext.HandoverSheetRows.Add(newHandoverSheetRow);
                 _dbContext.SaveChanges(true);
@@ -294,7 +294,7 @@ namespace handover_api.Service
                 _logger.LogError("事務失敗[CreateHandoverSheetRow]：{msg}", ex.Message);
                 return false;
             }
-            
+
         }
 
         public void DeleteHandoverSheetRow(int sheetRowId)
@@ -347,15 +347,14 @@ namespace handover_api.Service
         }
 
         // 要保證進來的rowDetails都屬於同一個handoverSheetMain
-        public string? CreateHandOverDetail(List<RowDetail> rowDetails,List<Member> readerMemberList,Member creator)
+        public string? CreateHandOverDetail(int mainSheetId, List<RowDetail> rowDetails, String? title, String? content, List<Member> readerMemberList, Member creator)
         {
             if (rowDetails.Count == 0) { return null; }
 
-            int mainSheetId = rowDetails[0].HandoverSheetRowSetting.MainSheetId.Value;
             var mainSheetSetting = GetSheetMainByMainSheetId(mainSheetId);
-            List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(mainSheetId);
+            List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(mainSheetId).Where(group => group.IsActive == true).ToList();
             List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
-            List<HandoverSheetRow> handoverSheetRows = GetSheetRowsByMainSheetIdAndInSheetGroupIds(mainSheetId, inSheetGroupIdList);
+            List<HandoverSheetRow> handoverSheetRows = GetSheetRowsByMainSheetIdAndInSheetGroupIds(mainSheetId, inSheetGroupIdList).Where(row => row.IsActive == true).ToList();
 
             HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = _mapper.Map<HandoverSheetRowDetailAndSettings>(mainSheetSetting);
             List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
@@ -400,20 +399,25 @@ namespace handover_api.Service
             // 新增handover_detail
             HandoverDetail newHandoverDetail = new HandoverDetail
             {
+                Title = title,
                 HandoverDetailId = Guid.NewGuid().ToString(),
                 MainSheetId = mainSheetId,
                 JsonContent = jsonContent,
                 CreatorId = creator.UserId,
                 CreatorName = creator.DisplayName
             };
+            if (content != null)
+            {
+                newHandoverDetail.Content = content;
+            }
 
-            
 
             using var scope = new TransactionScope();
             try
             {
                 _dbContext.HandoverDetails.Add(newHandoverDetail);
-                List<HandoverDetailReader> handoverDetailReaders =readerMemberList.Select(reader => {
+                List<HandoverDetailReader> handoverDetailReaders = readerMemberList.Select(reader =>
+                {
                     HandoverDetailReader handoverReader = new()
                     {
                         HandoverDetailId = newHandoverDetail.HandoverDetailId,
@@ -438,7 +442,66 @@ namespace handover_api.Service
                 _logger.LogError("事務失敗[CreateHandOverDetail]：{msg}", ex.Message);
                 return null;
             }
+        }
 
+
+        public List<HandoverDetail> SearchHandoverDetails(int? mainSheetId, DateTime? startDate, DateTime? endDate, PaginationCondition pageCondition, string? searchString)
+        {
+            IQueryable<HandoverDetail> query = _dbContext.HandoverDetails;
+
+            // 根据提供的条件进行过滤
+            if (startDate != null)
+            {
+                query = query.Where(h => h.UpdatedTime >= startDate);
+            }
+            if (endDate != null)
+            {
+                query = query.Where(h => h.UpdatedTime <= endDate);
+            }
+            if (mainSheetId != null)
+            {
+                query = query.Where(h => h.MainSheetId == mainSheetId);
+            }
+            if (!string.IsNullOrEmpty(searchString))
+            {
+
+                // 根据 Content 或 Title 进行模糊匹配
+                query = query.Where(h => h.Content.ToLower().Contains(searchString.ToLower())
+                || h.Title.ToLower().Contains(searchString.ToLower())
+                || h.CreatorName.ToLower().Contains(searchString.ToLower()));
+            }
+
+
+            if (pageCondition.IsDescOrderBy)
+            {
+                // 根据提供的 orderBy 字段进行排序，默认按照 CreatedTime 降序排序
+                query = pageCondition.OrderByField switch
+                {
+                    "mainSheetId" => query.OrderBy(h => h.MainSheetId),
+                    "nandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
+                    "creatorName" => query.OrderBy(h => h.CreatorName),
+                    "creatorId" => query.OrderBy(h => h.CreatorId),
+                    "updatedTime" => query.OrderBy(h => h.UpdatedTime),
+                    _ => query.OrderByDescending(h => h.CreatedTime),
+                };
+            }
+            else
+            {
+                query = pageCondition.OrderByField switch
+                {
+                    "mainSheetId" => query.OrderBy(h => h.MainSheetId),
+                    "nandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
+                    "creatorName" => query.OrderBy(h => h.CreatorName),
+                    "creatorId" => query.OrderBy(h => h.CreatorId),
+                    "updatedTime" => query.OrderBy(h => h.UpdatedTime),
+                    _ => query.OrderBy(h => h.CreatedTime),
+                };
+            }
+
+            // 分页
+            query = query.Skip((pageCondition.Page - 1) * pageCondition.PageSize).Take(pageCondition.PageSize);
+
+            return query.ToList();
         }
     }
 }

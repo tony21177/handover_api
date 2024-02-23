@@ -40,6 +40,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "handover_detail",
+         "ObjectType": 0
+      },
+      {
+         "Name": "handover_detail_readers",
+         "ObjectType": 0
+      },
+      {
          "Name": "handover_sheet_group",
          "ObjectType": 0
       },

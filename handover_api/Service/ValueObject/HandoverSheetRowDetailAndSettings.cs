@@ -1,8 +1,4 @@
-﻿using handover_api.Models;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-
-namespace handover_api.Service.ValueObject
+﻿namespace handover_api.Service.ValueObject
 {
     public class HandoverSheetRowDetailAndSettings
     {
@@ -34,11 +30,11 @@ namespace handover_api.Service.ValueObject
         public string UserId { get; set; }
         public string Name { get; set; }
 
-        public bool IsRead {  get; set; }
+        public bool IsRead { get; set; }
     }
 
 
-    
+
 
     public class GroupSetting
     {
@@ -66,7 +62,7 @@ namespace handover_api.Service.ValueObject
     {
         public int? MainSheetId { get; set; }
         public int? SheetGroupId { get; set; }
-        public int SheetRowId { get; set; }
+        public int? SheetRowId { get; set; }
         public string WeekDays { get; set; }
         public string SheetGroupTitle { get; set; }
         public string RowCategory { get; set; }

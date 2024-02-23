@@ -15,6 +15,12 @@ public partial class HandoverDetail
     [StringLength(100)]
     public string HandoverDetailId { get; set; }
 
+    [StringLength(1000)]
+    public string Title { get; set; }
+
+    [StringLength(2000)]
+    public string Content { get; set; }
+
     [Column("MainSheetID")]
     public int MainSheetId { get; set; }
 

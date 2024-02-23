@@ -11,12 +11,12 @@ namespace handover_api.Controllers.Validator
 
         public CreateOrUpdateHandoverDetailRequestValidator(ActionTypeEnum action, MemberService memberService)
         {
-            
+
             _memberService = memberService;
             if (action == ActionTypeEnum.Create)
             {
                 RuleFor(x => x.rowDetails).NotEmpty().WithMessage("rowDetails為必須");
-
+                RuleFor(x => x.Title).NotEmpty().WithMessage("titile為必須");
             }
             if (action == ActionTypeEnum.Update)
             {
