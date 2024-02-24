@@ -739,5 +739,10 @@ namespace handover_api.Service
             }
             return new();
         }
+
+        public List<HandoverDetailHistory> GetHandoverDetailHistories(string handoverDetailId)
+        {
+            return _dbContext.HandoverDetailHistories.Where(h => h.HandoverDetailId == handoverDetailId).ToList();
+        }
     }
 }

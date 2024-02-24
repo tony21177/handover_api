@@ -207,5 +207,19 @@ namespace handover_api.Controllers
                 Data = handoverDetailDtoList
             });
         }
+
+        [HttpGet("histories/{handoverDetailId}")]
+        [Authorize]
+        public IActionResult GetHandoverDetailHistories(string handoverDetailId)
+        {
+
+            var handoverDetailHistories = _handoverService.GetHandoverDetailHistories(handoverDetailId);
+
+            return Ok(new CommonResponse<List<HandoverDetailHistory>>
+            {
+                Result = true,
+                Data = handoverDetailHistories
+            });
+        }
     }
 }
