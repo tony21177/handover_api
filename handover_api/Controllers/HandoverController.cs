@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using handover_api.Auth;
 using handover_api.Common;
 using handover_api.Controllers.Request;
@@ -23,7 +24,8 @@ namespace handover_api.Controllers
         private readonly AuthHelpers _authHelpers;
         private readonly HandoverService _handoverService;
         private readonly MemberService _memberService;
-        private readonly CreateOrUpdateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
+        private readonly CreateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
+        private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
 
         public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService)
         {
@@ -32,13 +34,14 @@ namespace handover_api.Controllers
             _authHelpers = authHelpers;
             _handoverService = handoverService;
             _memberService = memberService;
-            _createHandoverDetailRequestValidator = new CreateOrUpdateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
+            _createHandoverDetailRequestValidator = new CreateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
+            _updateHandoverDetailRequestValidator = new UpdateHandoverDetailRequestValidator(_memberService);
         }
 
 
         [HttpPost("create")]
         [AuthorizeRoles("1", "3", "5")]
-        public IActionResult CreateHandover(CreateOrUpdateHandoverDetailRequest createHandoverDetailRequest)
+        public IActionResult CreateHandover(CreateHandoverDetailRequest createHandoverDetailRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
@@ -99,6 +102,43 @@ namespace handover_api.Controllers
                 Data = createdJsonContent,
             });
         }
+
+        [HttpPost("update")]
+        [AuthorizeRoles("1", "3", "5")]
+        public IActionResult UpdateHandover(UpdateHandoverDetailRequest updateHandoverDetailRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member creatorMember = memberAndPermissionSetting.Member;
+
+            // 參數驗證
+            var validationResult = _updateHandoverDetailRequestValidator.Validate(updateHandoverDetailRequest);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var handoverDetail = _handoverService.GetHandoverDetail(updateHandoverDetailRequest.HandoverDetailId);
+            if (handoverDetail == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此交班表不存在",
+                });
+            }
+
+            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(updateHandoverDetailRequest.readerUserIds);
+
+            var updatedJsonContent = _handoverService.UpdateHandover(handoverDetail, updateHandoverDetailRequest.rowDetails, updateHandoverDetailRequest.Title,
+                updateHandoverDetailRequest.Content, readerMemberList);
+
+            return Ok(new CommonResponse<string?>
+            {
+                Result = updatedJsonContent != null,
+                Data = updatedJsonContent,
+            });
+        }
+
 
         [HttpPost("search")]
         [Authorize]

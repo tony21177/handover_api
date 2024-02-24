@@ -46,37 +46,18 @@ namespace handover_api.Service
             if (!string.IsNullOrEmpty(request.Content))
                 query = query.Where(a => a.Content.Contains(request.Content));
             // Ordering
-            switch (request.OrderBy)
+            query = request.OrderBy switch
             {
-                case "Title":
-                    query = request.IsAsc ? query.OrderBy(a => a.Title) : query.OrderByDescending(a => a.Title);
-                    break;
-                case "Content":
-                    query = request.IsAsc ? query.OrderBy(a => a.Content) : query.OrderByDescending(a => a.Content);
-                    break;
-                case "BeginPublishTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.BeginPublishTime) : query.OrderByDescending(a => a.BeginPublishTime);
-                    break;
-                case "EndPublishTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.EndPublishTime) : query.OrderByDescending(a => a.EndPublishTime);
-                    break;
-                case "BeginViewTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.BeginViewTime) : query.OrderByDescending(a => a.BeginViewTime);
-                    break;
-                case "EndViewTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.EndViewTime) : query.OrderByDescending(a => a.EndViewTime);
-                    break;
-                case "CreatedTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.CreatedTime) : query.OrderByDescending(a => a.CreatedTime);
-                    break;
-                case "UpdatedTime":
-                    query = request.IsAsc ? query.OrderBy(a => a.UpdatedTime) : query.OrderByDescending(a => a.UpdatedTime);
-                    break;
-                default:
-                    // Default ordering by Id
-                    query = request.IsAsc ? query.OrderBy(a => a.Id) : query.OrderByDescending(a => a.Id);
-                    break;
-            }
+                "Title" => request.IsAsc ? query.OrderBy(a => a.Title) : query.OrderByDescending(a => a.Title),
+                "Content" => request.IsAsc ? query.OrderBy(a => a.Content) : query.OrderByDescending(a => a.Content),
+                "BeginPublishTime" => request.IsAsc ? query.OrderBy(a => a.BeginPublishTime) : query.OrderByDescending(a => a.BeginPublishTime),
+                "EndPublishTime" => request.IsAsc ? query.OrderBy(a => a.EndPublishTime) : query.OrderByDescending(a => a.EndPublishTime),
+                "BeginViewTime" => request.IsAsc ? query.OrderBy(a => a.BeginViewTime) : query.OrderByDescending(a => a.BeginViewTime),
+                "EndViewTime" => request.IsAsc ? query.OrderBy(a => a.EndViewTime) : query.OrderByDescending(a => a.EndViewTime),
+                "CreatedTime" => request.IsAsc ? query.OrderBy(a => a.CreatedTime) : query.OrderByDescending(a => a.CreatedTime),
+                "UpdatedTime" => request.IsAsc ? query.OrderBy(a => a.UpdatedTime) : query.OrderByDescending(a => a.UpdatedTime),
+                _ => request.IsAsc ? query.OrderBy(a => a.Id) : query.OrderByDescending(a => a.Id),// Default ordering by Id
+            };
 
             // Pagination
             if (request.IsPagination && request.PageIndex.HasValue && request.PageSize.HasValue)

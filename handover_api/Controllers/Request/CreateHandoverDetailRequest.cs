@@ -2,7 +2,7 @@
 
 namespace handover_api.Controllers.Request
 {
-    public class CreateOrUpdateHandoverDetailRequest
+    public class CreateHandoverDetailRequest
     {
         public string Title { get; set; }
 

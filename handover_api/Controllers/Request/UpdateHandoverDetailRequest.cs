@@ -1,0 +1,15 @@
+﻿namespace handover_api.Controllers.Request
+{
+    public class UpdateHandoverDetailRequest
+    {
+        public string HandoverDetailId { get; set; }
+        public string Title { get; set; }
+
+        public string? Content { get; set; }
+        public List<RowDetail> rowDetails { get; set; } = new List<RowDetail>();
+
+        public List<string> readerUserIds { get; set; } = new List<String>();
+    }
+
+
+}

@@ -44,6 +44,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "handover_detail_history",
+         "ObjectType": 0
+      },
+      {
          "Name": "handover_detail_readers",
          "ObjectType": 0
       },

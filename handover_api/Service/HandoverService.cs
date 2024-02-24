@@ -2,6 +2,7 @@
 using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
+using MaiBackend.PublicApi.Consts;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Transactions;
@@ -59,7 +60,10 @@ namespace handover_api.Service
         {
             return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId).ToList();
         }
-
+        public HandoverDetail? GetHandoverDetail(string handoverDetailId)
+        {
+            return _dbContext.HandoverDetails.Where(d => d.HandoverDetailId == handoverDetailId).FirstOrDefault();
+        }
 
         public List<HandoverSheetMain> UpdateHandoverSheetMains(List<HandoverSheetMain> updateHandoverSheetMainList)
         {
@@ -346,7 +350,6 @@ namespace handover_api.Service
             return sheetSettingDtoList;
         }
 
-        // 要保證進來的rowDetails都屬於同一個handoverSheetMain
         public string? CreateHandOverDetail(int mainSheetId, List<RowDetail> rowDetails, String? title, String? content, List<Member> readerMemberList, Member creator)
         {
             if (rowDetails.Count == 0) { return null; }
@@ -394,10 +397,10 @@ namespace handover_api.Service
                 group.RowSettingAndDetailList = matchedRowSettingAndDetailList;
             });
 
-            string jsonContent = JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
+            string jsonContent = System.Text.Json.JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
 
             // 新增handover_detail
-            HandoverDetail newHandoverDetail = new HandoverDetail
+            HandoverDetail newHandoverDetail = new()
             {
                 Title = title,
                 HandoverDetailId = Guid.NewGuid().ToString(),
@@ -430,6 +433,9 @@ namespace handover_api.Service
                     return handoverReader;
                 }).ToList();
                 _dbContext.HandoverDetailReaders.AddRange(handoverDetailReaders);
+                AddHandoverDetailHistory(newHandoverDetail, null, newHandoverDetail.Title, null, newHandoverDetail.Content,
+                        null, readerMemberList.Select(m => m.UserId).ToList(), null, readerMemberList.Select(m => m.DisplayName).ToList(), null, newHandoverDetail.JsonContent
+                        , Enum.GetName(ActionTypeEnum.Create));
                 _dbContext.SaveChanges(true);
                 // 提交事務
                 scope.Complete();
@@ -440,10 +446,126 @@ namespace handover_api.Service
                 // 處理事務失敗的例外
                 // 這裡可以根據實際需求進行錯誤處理
                 _logger.LogError("事務失敗[CreateHandOverDetail]：{msg}", ex.Message);
+                _logger.LogError("事務失敗[CreateHandOverDetail]：{StackTrace}", ex.StackTrace);
                 return null;
             }
         }
 
+        public string? UpdateHandover(HandoverDetail handoverDetail, List<RowDetail> rowDetails, String? title, String? content, List<Member>? readerMemberList)
+        {
+            string oldJsonContent = handoverDetail.JsonContent;
+            if (oldJsonContent == null)
+            {
+                _logger.LogError("資料庫有誤,jsonContent為null");
+            }
+            string? newJsonContent;
+            try
+            {
+                HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = JsonSerializer.Deserialize<HandoverSheetRowDetailAndSettings>(oldJsonContent);
+                List<RowSettingAndDetail> allOriginalRowSettingAndDetail = new();
+                if (handoverSheetRowDetailAndSettings == null)
+                {
+                    _logger.LogError("parse json 出來為null");
+                    return null;
+                }
+                else
+                {
+                    handoverSheetRowDetailAndSettings?.HandoverSheetGroupList?.ForEach(
+                    group =>
+                    {
+                        allOriginalRowSettingAndDetail.AddRange(group.RowSettingAndDetailList);
+                    });
+
+
+                    rowDetails.ForEach(rowDetail =>
+                    {
+                        var matchedOriginalRowDetail = allOriginalRowSettingAndDetail.Find(rd => rd.SheetRowId == rowDetail.SheetRowId);
+                        if (matchedOriginalRowDetail != null)
+                        {
+                            matchedOriginalRowDetail.Status = rowDetail.Status;
+                            matchedOriginalRowDetail.Comment = rowDetail.Comment;
+                        }
+                    });
+                    newJsonContent = JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
+                }
+
+                List<HandoverDetailReader> handoverDetailReaders = GetHandoverDetailReadersByDetailId(handoverDetail.HandoverDetailId);
+                List<string> originalReaderUserIdList = handoverDetailReaders.Select(r => r.UserId).ToList();
+                List<string> originalReaderUserNames = handoverDetailReaders.Select(r => r.UserName).ToList();
+                List<string> newReaderUserIdList = originalReaderUserIdList;
+                List<string> newReaderUserNameList = originalReaderUserNames;
+                if (readerMemberList != null)
+                {
+                    newReaderUserIdList = readerMemberList.Select(r => r.UserId).ToList();
+                    newReaderUserNameList = readerMemberList.Select(r => r.DisplayName).ToList();
+                }
+
+                var oldTitle = handoverDetail.Title;
+                var oldContent = handoverDetail.Content;
+                var newTitle = title ?? oldTitle;
+                var newContent = content ?? oldContent;
+
+                using var transaction = _dbContext.Database.BeginTransaction();
+
+                try
+                {
+                    if (title != null)
+                    {
+                        handoverDetail.Title = title;
+                    }
+                    if (content != null)
+                    {
+                        handoverDetail.Content = content;
+                    }
+                    handoverDetail.JsonContent = newJsonContent;
+
+                    List<string> toBeDeleteReaderUserIdList = originalReaderUserIdList.Except(newReaderUserIdList).ToList();
+                    List<string> toBeAddReaderUserIdList = newReaderUserIdList.Except(originalReaderUserIdList).ToList();
+
+                    List<HandoverDetailReader> toBeAddHandoverDetailReaderList = new();
+                    toBeAddReaderUserIdList.ForEach(userId =>
+                    {
+                        Member newAddReaderMember = readerMemberList.Find(m => m.UserId == userId);
+
+                        HandoverDetailReader handoverDetailReader = new HandoverDetailReader
+                        {
+                            HandoverDetailId = handoverDetail.HandoverDetailId,
+                            UserId = userId,
+                            UserName = newAddReaderMember.DisplayName,
+                            IsRead = false,
+                        };
+                        toBeAddHandoverDetailReaderList.Add(handoverDetailReader);
+                    });
+                    _dbContext.HandoverDetailReaders.AddRange(toBeAddHandoverDetailReaderList);
+                    DeleteHandoverDetailReader(handoverDetail.HandoverDetailId, toBeDeleteReaderUserIdList);
+
+                    AddHandoverDetailHistory(handoverDetail, oldTitle, newTitle, oldContent, newContent,
+                        originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent
+                        , Enum.GetName(ActionTypeEnum.Update));
+
+                    // Save changes to the database
+                    _dbContext.SaveChanges();
+
+                    // If all deletions were successful, commit the transaction
+                    transaction.Commit();
+                    return newJsonContent;
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions and log if necessary
+                    Console.WriteLine($"Error update handover: {ex.Message}");
+
+                    // Rollback the transaction in case of an exception
+                    transaction.Rollback();
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("parse json content有誤,ex:{message}", ex.Message);
+                return null;
+            }
+        }
 
         public List<HandoverDetail> SearchHandoverDetails(int? mainSheetId, DateTime? startDate, DateTime? endDate, PaginationCondition pageCondition, string? searchString)
         {
@@ -502,6 +624,72 @@ namespace handover_api.Service
             query = query.Skip((pageCondition.Page - 1) * pageCondition.PageSize).Take(pageCondition.PageSize);
 
             return query.ToList();
+        }
+
+        public List<HandoverDetailReader> GetHandoverDetailReadersByDetailId(string handoverDetailId)
+        {
+            return _dbContext.HandoverDetailReaders.Where(r => r.HandoverDetailId == handoverDetailId).ToList();
+        }
+
+        public void AddHandoverDetailHistory(HandoverDetail newHandoverDetail, string oldTitle, string newTitle, string oldContent, string newContent,
+            List<string> oldReaderUserIdList, List<string> newReaderUserIdList, List<string> oldReaderUserNameList, List<string> newReaderUserNameList,
+            string oldJsonContent, string newJsonContent, string action)
+        {
+
+            if (action == Enum.GetName(ActionTypeEnum.Update))
+            {
+                HandoverDetailHistory handoverDetailHistory = new()
+                {
+                    HandoverDetailId = newHandoverDetail.HandoverDetailId,
+                    MainSheetId = newHandoverDetail.MainSheetId,
+                    CreatorId = newHandoverDetail.CreatorId,
+                    CreatorName = newHandoverDetail.CreatorName,
+
+                    OldTitle = oldTitle,
+                    OldJsonContent = oldJsonContent,
+                    OldContent = oldContent,
+                    OldReaderUserIds = string.Join(",", oldReaderUserIdList),
+
+                    NewTitle = newTitle,
+                    NewContent = newContent,
+                    NewJsonContent = newJsonContent,
+                    NewReaderUserIds = string.Join(",", newReaderUserIdList),
+                    NewReaderUserNames = string.Join(",", newReaderUserNameList),
+                    Action = action
+                };
+                _dbContext.HandoverDetailHistories.Add(handoverDetailHistory);
+            }
+            else if (action == Enum.GetName(ActionTypeEnum.Create))
+            {
+                HandoverDetailHistory handoverDetailHistory = new()
+                {
+                    HandoverDetailId = newHandoverDetail.HandoverDetailId,
+                    MainSheetId = newHandoverDetail.MainSheetId,
+                    CreatorId = newHandoverDetail.CreatorId,
+                    CreatorName = newHandoverDetail.CreatorName,
+
+                    NewTitle = newTitle,
+                    NewContent = newContent,
+                    NewJsonContent = newJsonContent,
+                    NewReaderUserIds = string.Join(",", newReaderUserIdList),
+                    NewReaderUserNames = string.Join(",", newReaderUserNameList),
+                    Action = action
+                };
+                _dbContext.HandoverDetailHistories.Add(handoverDetailHistory);
+            }
+        }
+
+
+        public void DeleteHandoverDetailReader(string handoverDetailId, List<string> toBeRemovedReaderUserIdList)
+        {
+            string inUserId = string.Join(",", toBeRemovedReaderUserIdList);
+
+            var deleteSql = $@"
+            Delete From handover_detail_readers
+            WHERE UserId IN ('{inUserId}') and handoverDetailId='{handoverDetailId}'";
+
+            // Execute the raw SQL update statement
+            _dbContext.Database.ExecuteSqlRaw(deleteSql);
         }
     }
 }
