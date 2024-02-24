@@ -60,7 +60,7 @@ namespace MaiBackend.Common.AutoMapper
             CreateMap<HandoverSheetRow, HandoverSheetRow>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
 
-            
+
             CreateMap<CreateOrUpdateSheetSettingMainRequest, HandoverSheetMain>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<CreateOrUpdateSheetSettingGroupRequest, HandoverSheetGroup>()
@@ -115,6 +115,7 @@ namespace MaiBackend.Common.AutoMapper
         public static DateTime? ParseDateString(string? dateString)
         {
             CultureInfo culture = new("zh-TW");
+            culture.DateTimeFormat.Calendar = new TaiwanCalendar();
             if (DateTime.TryParseExact(dateString, "yyy/M/dd", culture, DateTimeStyles.None, out DateTime result)
         || DateTime.TryParseExact(dateString, "yyy/MM/dd", culture, DateTimeStyles.None, out result))
             {
@@ -143,6 +144,7 @@ namespace MaiBackend.Common.AutoMapper
         public static string? FormatDateString(DateTime? dateTime)
         {
             CultureInfo culture = new("zh-TW");
+            culture.DateTimeFormat.Calendar = new TaiwanCalendar();
             if (dateTime.HasValue)
             {
                 return dateTime.Value.ToString("yyy/MM/dd", culture);

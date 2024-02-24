@@ -100,7 +100,7 @@ namespace handover_api.Controllers
             });
         }
 
-        [HttpPost]
+        [HttpPost("search")]
         [Authorize]
         public IActionResult SearchHandoverDetails(SearchHandoverDetailRequest searchHandoverDetailRequest)
         {
@@ -115,8 +115,7 @@ namespace handover_api.Controllers
             }
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
             var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
-
-
+            endDate = endDate?.AddDays(1);
             var data = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
