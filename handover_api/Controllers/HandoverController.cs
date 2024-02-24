@@ -6,6 +6,7 @@ using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
 using handover_api.Service;
+using handover_api.Service.ValueObject;
 using handover_api.Utils;
 using MaiBackend.Common.AutoMapper;
 using MaiBackend.PublicApi.Consts;
@@ -163,6 +164,47 @@ namespace handover_api.Controllers
             {
                 Result = true,
                 Data = data
+            });
+        }
+
+        [HttpGet("detail/{handoverDetailId}")]
+        [Authorize]
+        public IActionResult ReadHandoverDetail(string handoverDetailId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member reader = memberAndPermissionSetting.Member;
+            var handoverDetail = _handoverService.GetHandoverDetailByDetailId(handoverDetailId);
+            if (handoverDetail == null)
+            {
+                return BadRequest(new CommonResponse<HandoverDetail>
+                {
+                    Result = false,
+                    Message = "此交班表不存在",
+                });
+            }
+
+
+            var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
+            return Ok(new CommonResponse<HandoverDetail>
+            {
+                Result = result,
+                Data = handoverDetail
+            });
+        }
+
+        [HttpGet("detail/my")]
+        [Authorize]
+        public IActionResult GetMyHandoverDetail()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            Member reader = memberAndPermissionSetting.Member;
+            var handoverDetailDtoList = _handoverService.GetMyHandoverDetailDtoList(reader.UserId);
+
+            return Ok(new CommonResponse<List<MyHandoverDetailDto>>
+            {
+                Result = true,
+                Data = handoverDetailDtoList
             });
         }
     }

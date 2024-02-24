@@ -691,5 +691,53 @@ namespace handover_api.Service
             // Execute the raw SQL update statement
             _dbContext.Database.ExecuteSqlRaw(deleteSql);
         }
+
+        public HandoverDetail? GetHandoverDetailByDetailId(string handoverDetailId)
+        {
+            return _dbContext.HandoverDetails.Where(d => d.HandoverDetailId == handoverDetailId).FirstOrDefault();
+        }
+
+        public List<HandoverDetail> GetHandoverDetailByDetailIds(List<string> handoverDetailIdList)
+        {
+            return _dbContext.HandoverDetails.Where(d => handoverDetailIdList.Contains(d.HandoverDetailId)).ToList();
+        }
+
+        public bool ReadHandoverDetail(string handoverDetailId, string userId)
+        {
+            var handoverReader = _dbContext.HandoverDetailReaders.Where(dr => dr.HandoverDetailId == handoverDetailId && dr.UserId == userId).FirstOrDefault();
+            if (handoverReader != null)
+            {
+                handoverReader.IsRead = true;
+                handoverReader.ReadTime = DateTime.Now;
+                _dbContext.SaveChanges();
+                return true;
+            }
+            return false;
+        }
+
+        public List<MyHandoverDetailDto> GetMyHandoverDetailDtoList(string userId)
+        {
+            List<HandoverDetailReader> handoverDetailReaders = _dbContext.HandoverDetailReaders.Where(rd => rd.UserId == userId).ToList();
+
+            if (handoverDetailReaders.Count != 0)
+            {
+                List<MyHandoverDetailDto> myHandoverDetailDtoList = new();
+                List<string> allDistinctHandoverDetailIdList = handoverDetailReaders.Select(r => r.HandoverDetailId).Distinct().ToList();
+                List<HandoverDetail> handoverDetails = GetHandoverDetailByDetailIds(allDistinctHandoverDetailIdList);
+                handoverDetailReaders.ForEach(dr =>
+                {
+                    var matchedDetail = handoverDetails.Find(d => d.HandoverDetailId == dr.HandoverDetailId);
+                    if (matchedDetail != null)
+                    {
+                        MyHandoverDetailDto myHandoverDetailDto = _mapper.Map<MyHandoverDetailDto>(matchedDetail);
+                        myHandoverDetailDto.IsRead = dr.IsRead;
+                        myHandoverDetailDto.ReadTime = dr.ReadTime;
+                        myHandoverDetailDtoList.Add(myHandoverDetailDto);
+                    }
+                });
+                return myHandoverDetailDtoList;
+            }
+            return new();
+        }
     }
 }

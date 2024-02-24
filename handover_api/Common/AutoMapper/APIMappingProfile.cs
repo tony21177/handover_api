@@ -95,6 +95,8 @@ namespace MaiBackend.Common.AutoMapper
             CreateMap<HandoverSheetRow, RowSettingAndDetail>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember, destMember, context) => srcMember != null && destMember == null));
 
+            CreateMap<HandoverDetail, MyHandoverDetailDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
         //public Dictionary<string, object>? MapSchema(ColumnDefinition src)
