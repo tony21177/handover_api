@@ -29,6 +29,11 @@ namespace handover_api.Service
             return _dbContext.Announcements.Where(annoucement => annoucement.AnnounceId == annoucementId).FirstOrDefault();
         }
 
+        public List<Announcement> GetAnnouncementsByAnnounceIdList(List<string> annoucementIdList)
+        {
+            return _dbContext.Announcements.Where(annoucement => annoucementIdList.Contains(annoucement.AnnounceId)).ToList();
+        }
+
         public List<Announcement> GetFilteredAnnouncements(ListAnnoucementRequest request)
         {
             var query = _dbContext.Announcements.AsQueryable();
@@ -575,6 +580,14 @@ namespace handover_api.Service
         {
             var announcementHistoryList = _dbContext.AnnouncementHistories.Where(history => history.AnnounceId == announceId).OrderByDescending(history => history.Id).ToList();
             return announcementHistoryList;
+        }
+
+        public List<Announcement> GetUnreadAnnouncement(Member reader)
+        {
+            List<AnnouceReader> unreadAnnouceReaderList = _dbContext.AnnouceReaders.Where(ar => ar.IsRead != true && ar.UserId == reader.UserId).ToList();
+            List<string> unreadAnnounceIdList = unreadAnnouceReaderList.Select(uar => uar.AnnounceId).ToList();
+            List<Announcement> unreadAnnouncements = GetAnnouncementsByAnnounceIdList(unreadAnnounceIdList);
+            return unreadAnnouncements.Where(ua => ua.IsActive == true).ToList();
         }
     }
 }

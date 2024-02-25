@@ -125,6 +125,7 @@ public partial class HandoverContext : DbContext
             entity.HasKey(e => e.HandoverDetailId).HasName("PRIMARY");
 
             entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
             entity.Property(e => e.UpdatedTime)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");

@@ -38,4 +38,7 @@ public partial class HandoverDetail
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedTime { get; set; }
+
+    [Required]
+    public bool? IsActive { get; set; }
 }

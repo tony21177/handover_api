@@ -744,5 +744,13 @@ namespace handover_api.Service
         {
             return _dbContext.HandoverDetailHistories.Where(h => h.HandoverDetailId == handoverDetailId).ToList();
         }
+
+        public List<HandoverDetail> GetUnreadHandoverDetails(Member reader)
+        {
+            List<HandoverDetailReader> unreadDetailReaders = _dbContext.HandoverDetailReaders.Where(dr => dr.UserId == reader.UserId && dr.IsRead != true).ToList();
+            List<string> handoverDetailIdList = unreadDetailReaders.Select(udr => udr.HandoverDetailId).ToList();
+            List<HandoverDetail> unreadDetail = GetHandoverDetailByDetailIds(handoverDetailIdList);
+            return unreadDetail.Where(ud => ud.IsActive == true).ToList();
+        }
     }
 }
