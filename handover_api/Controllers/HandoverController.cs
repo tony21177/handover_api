@@ -2,6 +2,7 @@
 using FluentValidation;
 using handover_api.Auth;
 using handover_api.Common;
+using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
@@ -147,6 +148,10 @@ namespace handover_api.Controllers
         [Authorize]
         public IActionResult SearchHandoverDetails(SearchHandoverDetailRequest searchHandoverDetailRequest)
         {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member loginMember = memberAndPermissionSetting.Member;
+
             if ((searchHandoverDetailRequest.StartDate != null && !Regex.IsMatch(searchHandoverDetailRequest.StartDate, @"^\d{3}/\d{2}/\d{2}$"))
                 || (searchHandoverDetailRequest.EndDate != null && !Regex.IsMatch(searchHandoverDetailRequest.EndDate, @"^\d{3}/\d{2}/\d{2}$")))
             {
@@ -159,13 +164,32 @@ namespace handover_api.Controllers
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
             var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
             endDate = endDate?.AddDays(1);
-            var data = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
+            List<HandoverDetail> handoverDetailList = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
-            return Ok(new CommonResponse<List<HandoverDetail>>
+            List<HandoverDetailWithReadDto> handoverDetailWithReadDtoList = _mapper.Map<List<HandoverDetailWithReadDto>>(handoverDetailList);
+
+            var handoverReaderList = _handoverService.GetHandoverDetailReadersByUserId(loginMember.UserId);
+
+            handoverDetailWithReadDtoList.ForEach(dto =>
+            {
+                var matchedReader = handoverReaderList.Find(reader => reader.HandoverDetailId == dto.HandoverDetailId);
+                if (matchedReader != null)
+                {
+                    dto.isRead = matchedReader.IsRead;
+                }
+                else
+                {
+                    // 如果不在 readUser 名單內，視為已讀
+                    dto.isRead = true;
+                }
+            });
+
+
+            return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
             {
                 Result = true,
-                Data = data
+                Data = handoverDetailWithReadDtoList
             });
         }
 

@@ -667,6 +667,10 @@ namespace handover_api.Service
         {
             return _dbContext.HandoverDetailReaders.Where(r => r.HandoverDetailId == handoverDetailId).ToList();
         }
+        public List<HandoverDetailReader> GetHandoverDetailReadersByUserId(string userId)
+        {
+            return _dbContext.HandoverDetailReaders.Where(r => r.UserId==userId).ToList();
+        }
 
         public void AddHandoverDetailHistory(HandoverDetail newHandoverDetail, string oldTitle, string newTitle, string oldContent, string newContent,
             List<string> oldReaderUserIdList, List<string> newReaderUserIdList, List<string> oldReaderUserNameList, List<string> newReaderUserNameList,
