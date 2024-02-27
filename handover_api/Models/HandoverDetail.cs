@@ -41,4 +41,7 @@ public partial class HandoverDetail
 
     [Required]
     public bool? IsActive { get; set; }
+
+    [Column(TypeName = "text")]
+    public string FileAttIds { get; set; }
 }

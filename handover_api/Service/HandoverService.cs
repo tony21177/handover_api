@@ -350,7 +350,7 @@ namespace handover_api.Service
             return sheetSettingDtoList;
         }
 
-        public string? CreateHandOverDetail(int mainSheetId, List<RowDetail> rowDetails, String? title, String? content, List<Member> readerMemberList, Member creator)
+        public string? CreateHandOverDetail(int mainSheetId, List<RowDetail> rowDetails, String? title, String? content, List<Member> readerMemberList, Member creator,List<string> fileAttIdList)
         {
             if (rowDetails.Count == 0) { return null; }
 
@@ -407,7 +407,8 @@ namespace handover_api.Service
                 MainSheetId = mainSheetId,
                 JsonContent = jsonContent,
                 CreatorId = creator.UserId,
-                CreatorName = creator.DisplayName
+                CreatorName = creator.DisplayName,
+                FileAttIds = string.Join(",",fileAttIdList),
             };
             if (content != null)
             {
@@ -434,7 +435,7 @@ namespace handover_api.Service
                 }).ToList();
                 _dbContext.HandoverDetailReaders.AddRange(handoverDetailReaders);
                 AddHandoverDetailHistory(newHandoverDetail, null, newHandoverDetail.Title, null, newHandoverDetail.Content,
-                        null, readerMemberList.Select(m => m.UserId).ToList(), null, readerMemberList.Select(m => m.DisplayName).ToList(), null, newHandoverDetail.JsonContent
+                        null, readerMemberList.Select(m => m.UserId).ToList(), null, readerMemberList.Select(m => m.DisplayName).ToList(), null, newHandoverDetail.JsonContent,null,newHandoverDetail.FileAttIds
                         , Enum.GetName(ActionTypeEnum.Create));
                 _dbContext.SaveChanges(true);
                 // 提交事務
@@ -451,9 +452,10 @@ namespace handover_api.Service
             }
         }
 
-        public string? UpdateHandover(HandoverDetail handoverDetail, List<RowDetail> rowDetails, String? title, String? content, List<Member>? readerMemberList)
+        public string? UpdateHandover(HandoverDetail handoverDetail, List<RowDetail> rowDetails, String? title, String? content, List<Member>? readerMemberList,List<string> fileAttidList)
         {
             string oldJsonContent = handoverDetail.JsonContent;
+            string oldFileAttIds = handoverDetail.FileAttIds;
             if (oldJsonContent == null)
             {
                 _logger.LogError("資料庫有誤,jsonContent為null");
@@ -518,6 +520,7 @@ namespace handover_api.Service
                         handoverDetail.Content = content;
                     }
                     handoverDetail.JsonContent = newJsonContent;
+                    handoverDetail.FileAttIds = string.Join(",",fileAttidList);
 
                     List<string> toBeDeleteReaderUserIdList = originalReaderUserIdList.Except(newReaderUserIdList).ToList();
                     List<string> toBeAddReaderUserIdList = newReaderUserIdList.Except(originalReaderUserIdList).ToList();
@@ -540,7 +543,8 @@ namespace handover_api.Service
                     DeleteHandoverDetailReader(handoverDetail.HandoverDetailId, toBeDeleteReaderUserIdList);
 
                     AddHandoverDetailHistory(handoverDetail, oldTitle, newTitle, oldContent, newContent,
-                        originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent
+                        originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent,
+                        oldFileAttIds,string.Join(",",handoverDetail.FileAttIds)
                         , Enum.GetName(ActionTypeEnum.Update));
 
                     // Save changes to the database
@@ -633,7 +637,7 @@ namespace handover_api.Service
 
         public void AddHandoverDetailHistory(HandoverDetail newHandoverDetail, string oldTitle, string newTitle, string oldContent, string newContent,
             List<string> oldReaderUserIdList, List<string> newReaderUserIdList, List<string> oldReaderUserNameList, List<string> newReaderUserNameList,
-            string oldJsonContent, string newJsonContent, string action)
+            string oldJsonContent, string newJsonContent,string? oldFileAttids,string? newFileAttIds, string action)
         {
 
             if (action == Enum.GetName(ActionTypeEnum.Update))
@@ -649,12 +653,14 @@ namespace handover_api.Service
                     OldJsonContent = oldJsonContent,
                     OldContent = oldContent,
                     OldReaderUserIds = string.Join(",", oldReaderUserIdList),
+                    OldFileAttIds = oldFileAttids,
 
                     NewTitle = newTitle,
                     NewContent = newContent,
                     NewJsonContent = newJsonContent,
                     NewReaderUserIds = string.Join(",", newReaderUserIdList),
                     NewReaderUserNames = string.Join(",", newReaderUserNameList),
+                    NewFileAttIds = newFileAttIds,
                     Action = action
                 };
                 _dbContext.HandoverDetailHistories.Add(handoverDetailHistory);
@@ -673,6 +679,7 @@ namespace handover_api.Service
                     NewJsonContent = newJsonContent,
                     NewReaderUserIds = string.Join(",", newReaderUserIdList),
                     NewReaderUserNames = string.Join(",", newReaderUserNameList),
+                    NewFileAttIds = newFileAttIds,
                     Action = action
                 };
                 _dbContext.HandoverDetailHistories.Add(handoverDetailHistory);
@@ -751,6 +758,11 @@ namespace handover_api.Service
             List<string> handoverDetailIdList = unreadDetailReaders.Select(udr => udr.HandoverDetailId).ToList();
             List<HandoverDetail> unreadDetail = GetHandoverDetailByDetailIds(handoverDetailIdList);
             return unreadDetail.Where(ud => ud.IsActive == true).ToList();
+        }
+
+        public List<FileDetailInfo> GetFileDetailInfos(List<string> fileAttIds)
+        {
+            return _dbContext.FileDetailInfos.Where(fi=> fileAttIds.Contains(fi.AttId)).ToList();
         }
     }
 }

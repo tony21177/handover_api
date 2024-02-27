@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using handover_api.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace handover_api.Service.ValueObject
 {
@@ -25,5 +26,7 @@ namespace handover_api.Service.ValueObject
         public DateTime? UpdatedTime { get; set; }
         public bool IsRead { get; set; }
         public DateTime? ReadTime { get; set; }
+        public string FileAttIds { get; set; }
+        public List<FileDetailInfo> Files { get; set; } = new List<FileDetailInfo>();
     }
 }

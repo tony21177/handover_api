@@ -10,5 +10,6 @@
         public bool? IsActive { get; set; }
         public string? Version { get; set; }
         public string? SerialCode { get; set; }
+        public List<string> AttIdList { get; set; } = new List<string>();
     }
 }
