@@ -56,9 +56,42 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetMains.Where(m => mainSheetIdList.Contains(m.SheetId)).ToList();
         }
 
-        public List<HandoverSheetRow> GetSheetRowsByMainSheetId(int mainSheetId)
+        //public List<HandoverSheetRow> GetSheetRowsByMainSheetId(int mainSheetId)
+        //{
+        //    return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId).ToList();
+        //}
+
+        public List<HandoverSheetRowWithGroup> GetSheetRowsByMainSheetId(int mainSheetId)
         {
-            return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId).ToList();
+            var query = from sheetRow in _dbContext.HandoverSheetRows
+                        join sheetGroup in _dbContext.HandoverSheetGroups
+                        on sheetRow.SheetGroupId equals sheetGroup.SheetGroupId
+                        where sheetRow.MainSheetId == mainSheetId
+                        select new HandoverSheetRowWithGroup
+                        {
+                            Id = sheetRow.Id,
+                            MainSheetId = sheetRow.MainSheetId,
+                            SheetGroupId = sheetRow.SheetGroupId,
+                            SheetRowId= sheetRow.SheetRowId,
+                            WeekDays = sheetRow.WeekDays,
+                            SheetGroupTitle = sheetRow.SheetGroupTitle,
+                            RowCategory = sheetRow.RowCategory,
+                            MachineBrand = sheetRow.MachineBrand,
+                            MachineCode = sheetRow.MachineCode,
+                            MachineSpec = sheetRow.MachineSpec,
+                            MaintainItemName = sheetRow.MaintainItemName,
+                            MaintainItemDescription = sheetRow.MaintainItemDescription,
+                            MaintainItemType = sheetRow.MaintainItemType,
+                            MaintainAnswerType = sheetRow.MaintainAnswerType,
+                            Remarks = sheetRow.Remarks,
+                            CreatorName =sheetRow.CreatorName,
+                            IsActive = sheetRow.IsActive,
+                            CreatedTime = sheetRow.CreatedTime,
+                            UpdatedTime = sheetRow.UpdatedTime,
+                            IsGroupActive = sheetGroup.IsActive
+                        };
+
+            return query.ToList();
         }
         public HandoverDetail? GetHandoverDetail(string handoverDetailId)
         {

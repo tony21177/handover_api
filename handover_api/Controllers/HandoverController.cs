@@ -79,8 +79,8 @@ namespace handover_api.Controllers
                 });
             }
 
-            List<HandoverSheetRow> neededSheetRow = _handoverService.GetSheetRowsByMainSheetId(matchedSheetMainIdList[0]).Where(row => row.IsActive == true).ToList();
-            var neededSheetRowCount = neededSheetRow.Count;
+            List<HandoverSheetRowWithGroup> neededSheetRowWithGroup = _handoverService.GetSheetRowsByMainSheetId(matchedSheetMainIdList[0]).Where(row => row.IsActive == true&&row.IsGroupActive==true).ToList();
+            var neededSheetRowCount = neededSheetRowWithGroup.Count;
             if (neededSheetRowCount != createHandoverDetailRequest.RowDetails.Count)
             {
                 return BadRequest(new CommonResponse<dynamic>
