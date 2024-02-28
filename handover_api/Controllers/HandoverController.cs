@@ -26,10 +26,11 @@ namespace handover_api.Controllers
         private readonly AuthHelpers _authHelpers;
         private readonly HandoverService _handoverService;
         private readonly MemberService _memberService;
+        private readonly FileUploadService _fileUploadService;
         private readonly CreateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
         private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
 
-        public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService)
+        public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService, FileUploadService fileUploadService)
         {
             _mapper = mapper;
             _logger = logger;
@@ -38,6 +39,7 @@ namespace handover_api.Controllers
             _memberService = memberService;
             _createHandoverDetailRequestValidator = new CreateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
             _updateHandoverDetailRequestValidator = new UpdateHandoverDetailRequestValidator(_memberService);
+            _fileUploadService = fileUploadService;
         }
 
 
@@ -57,7 +59,7 @@ namespace handover_api.Controllers
             }
 
             // 驗證是否同屬一個main
-            var sheetRowIdList = createHandoverDetailRequest.rowDetails.Select(rd => rd.SheetRowId).ToList();
+            var sheetRowIdList = createHandoverDetailRequest.RowDetails.Select(rd => rd.SheetRowId).ToList();
             var matchedSheetMainSettings = _handoverService.GetSheetMainListBySheetRowIdList(sheetRowIdList);
             var matchedSheetMainIdList = matchedSheetMainSettings.Select(main => main.SheetId).ToList();
             bool isTheSameMainId = matchedSheetMainSettings.Distinct().Count() == 1;
@@ -78,25 +80,25 @@ namespace handover_api.Controllers
                 });
             }
 
-            List<HandoverSheetRow> neededSheetRow = _handoverService.GetSheetRowsByMainSheetId(matchedSheetMainIdList[0]).Where(row => row.IsActive == true).ToList();
-            var neededSheetRowCount = neededSheetRow.Count;
-            if (neededSheetRowCount != createHandoverDetailRequest.rowDetails.Count)
+            List<HandoverSheetRowWithGroup> neededSheetRowWithGroup = _handoverService.GetSheetRowsByMainSheetId(matchedSheetMainIdList[0]).Where(row => row.IsActive == true && row.IsGroupActive == true).ToList();
+            var neededSheetRowCount = neededSheetRowWithGroup.Count;
+            if (neededSheetRowCount != createHandoverDetailRequest.RowDetails.Count)
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = $"交班單的row筆數:{createHandoverDetailRequest.rowDetails.Count}不對,需要{neededSheetRowCount}筆"
+                    Message = $"交班單的row筆數:{createHandoverDetailRequest.RowDetails.Count}不對,需要{neededSheetRowCount}筆"
                 });
             }
 
-            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(createHandoverDetailRequest.readerUserIds);
+            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(createHandoverDetailRequest.ReaderUserIds);
 
             if (readerMemberList.Find(m => m.UserId == creatorMember.UserId) == null)
             {
                 readerMemberList.Add(creatorMember);
             }
 
-            var createdJsonContent = _handoverService.CreateHandOverDetail(matchedSheetMainIdList[0], createHandoverDetailRequest.rowDetails, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember);
+            var createdJsonContent = _handoverService.CreateHandOverDetail(matchedSheetMainIdList[0], createHandoverDetailRequest.RowDetails, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
 
             return Ok(new CommonResponse<string?>
             {
@@ -129,10 +131,10 @@ namespace handover_api.Controllers
                 });
             }
 
-            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(updateHandoverDetailRequest.readerUserIds);
+            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(updateHandoverDetailRequest.ReaderUserIds);
 
-            var updatedJsonContent = _handoverService.UpdateHandover(handoverDetail, updateHandoverDetailRequest.rowDetails, updateHandoverDetailRequest.Title,
-                updateHandoverDetailRequest.Content, readerMemberList);
+            var updatedJsonContent = _handoverService.UpdateHandover(handoverDetail, updateHandoverDetailRequest.RowDetails, updateHandoverDetailRequest.Title,
+                updateHandoverDetailRequest.Content, readerMemberList, updateHandoverDetailRequest.FileAttIds);
 
             return Ok(new CommonResponse<string?>
             {
@@ -146,6 +148,10 @@ namespace handover_api.Controllers
         [Authorize]
         public IActionResult SearchHandoverDetails(SearchHandoverDetailRequest searchHandoverDetailRequest)
         {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member loginMember = memberAndPermissionSetting.Member;
+
             if ((searchHandoverDetailRequest.StartDate != null && !Regex.IsMatch(searchHandoverDetailRequest.StartDate, @"^\d{3}/\d{2}/\d{2}$"))
                 || (searchHandoverDetailRequest.EndDate != null && !Regex.IsMatch(searchHandoverDetailRequest.EndDate, @"^\d{3}/\d{2}/\d{2}$")))
             {
@@ -158,13 +164,49 @@ namespace handover_api.Controllers
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
             var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
             endDate = endDate?.AddDays(1);
-            var data = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
+            List<HandoverDetail> handoverDetailList = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
-            return Ok(new CommonResponse<List<HandoverDetail>>
+            List<HandoverDetailWithReadDto> handoverDetailWithReadDtoList = _mapper.Map<List<HandoverDetailWithReadDto>>(handoverDetailList);
+
+            var handoverReaderList = _handoverService.GetHandoverDetailReadersByUserId(loginMember.UserId);
+
+            List<string> fileAttIdsList = handoverDetailList.Select(hd => hd.FileAttIds).ToList();
+            HashSet<string> allDistinctfileAttIds = new();
+            fileAttIdsList.ForEach(fileAttIdsString =>
+            {
+                var fileAttIdsList = fileAttIdsString.Split(",");
+                foreach (var fileAttId in fileAttIdsList)
+                {
+                    allDistinctfileAttIds.Add(fileAttId);
+                }
+            });
+            List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(allDistinctfileAttIds.ToList());
+
+
+
+            handoverDetailWithReadDtoList.ForEach(dto =>
+            {
+                var matchedReader = handoverReaderList.Find(reader => reader.HandoverDetailId == dto.HandoverDetailId);
+                if (matchedReader != null)
+                {
+                    dto.IsRead = matchedReader.IsRead;
+                }
+                else
+                {
+                    // 如果不在 readUser 名單內，視為已讀
+                    dto.IsRead = true;
+                }
+                var fileAttIdList = dto.FileAttIds.Split(",");
+                List<FileDetailInfo> matchedFiles = fileDetailInfos.Where(fdi => fileAttIdList.Contains(fdi.AttId)).ToList();
+                dto.Files = matchedFiles;
+            });
+
+
+            return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
             {
                 Result = true,
-                Data = data
+                Data = handoverDetailWithReadDtoList
             });
         }
 
@@ -184,11 +226,21 @@ namespace handover_api.Controllers
                     Message = "此交班表不存在",
                 });
             }
+            HandoverDetailWithReaders handoverDetailWithReaders = _mapper.Map<HandoverDetailWithReaders>(handoverDetail);
+
+            if (!string.IsNullOrEmpty(handoverDetail.FileAttIds))
+            {
+                List<string> fileAttIds = handoverDetail.FileAttIds.Split(",").ToList();
+                List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
+                handoverDetailWithReaders.Files = fileDetailInfos;
+            }
 
             var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
-            var handoverDetailWithReaders = _mapper.Map<HandoverDetailWithReaders>(handoverDetail);
+
             var handoverReaders = _handoverService.GetHandoverDetailReadersByDetailId(handoverDetailId);
+
             handoverDetailWithReaders.HandoverDetailReader = handoverReaders;
+
 
             return Ok(new CommonResponse<HandoverDetailWithReaders>
             {
@@ -204,7 +256,15 @@ namespace handover_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             Member reader = memberAndPermissionSetting.Member;
             var handoverDetailDtoList = _handoverService.GetMyHandoverDetailDtoList(reader.UserId);
-
+            foreach (var handoverDetailDto in handoverDetailDtoList)
+            {
+                if (!string.IsNullOrEmpty(handoverDetailDto.FileAttIds))
+                {
+                    List<string> fileAttIds = handoverDetailDto.FileAttIds.Split(",").ToList();
+                    List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
+                    handoverDetailDto.Files = fileDetailInfos;
+                }
+            }
             return Ok(new CommonResponse<List<MyHandoverDetailDto>>
             {
                 Result = true,
@@ -224,6 +284,37 @@ namespace handover_api.Controllers
                 Result = true,
                 Data = handoverDetailHistories
             });
+        }
+
+        [HttpPost("Files/upload")]
+        [Authorize]
+        public async Task<IActionResult> UploadFile([FromForm] UploadFilesRequest uploadFilesRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+
+
+            var fileDetails = await _fileUploadService.PostFilesAsync(uploadFilesRequest.Files, new List<string> { "handover" });
+            var fileDetailInfos = _mapper.Map<List<FileDetailInfo>>(fileDetails);
+            bool result = _fileUploadService.AddFileDetailInfo(fileDetailInfos);
+
+            return Ok(new CommonResponse<List<FileDetailInfo>>
+            {
+                Result = result,
+                Message = result ? "" : "上傳失敗",
+                Data = fileDetailInfos
+            });
+        }
+        [HttpGet("Files/{attid}")]
+        public async Task<IActionResult> DownloadFile(string attid)
+        {
+            var fileDetail = _fileUploadService.GetFileDetail(attid);
+            if (fileDetail == null)
+            {
+                return NotFound();
+            }
+            var fileStream = _fileUploadService.Download(fileDetail);
+            return fileStream;
         }
     }
 }

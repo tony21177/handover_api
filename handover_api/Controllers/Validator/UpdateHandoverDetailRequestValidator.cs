@@ -15,7 +15,7 @@ namespace handover_api.Controllers.Validator
 
             RuleFor(x => x.HandoverDetailId).NotEmpty().WithMessage("handoverDetailId為必須");
 
-            RuleFor(x => x.readerUserIds)
+            RuleFor(x => x.ReaderUserIds)
                 .Must((request, userIds, context) => BeValidUserList(userIds, context))
                 .WithMessage("以下 userId 為無效的 user: {InvalidUserIds}");
 

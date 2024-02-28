@@ -15,11 +15,11 @@ namespace handover_api.Controllers.Validator
             _memberService = memberService;
             if (action == ActionTypeEnum.Create)
             {
-                RuleFor(x => x.rowDetails).NotEmpty().WithMessage("rowDetails為必須");
+                RuleFor(x => x.RowDetails).NotEmpty().WithMessage("rowDetails為必須");
                 RuleFor(x => x.Title).NotEmpty().WithMessage("titile為必須");
             }
 
-            RuleFor(x => x.readerUserIds)
+            RuleFor(x => x.ReaderUserIds)
                 .Must((request, userIds, context) => BeValidUserList(userIds, context))
                 .WithMessage("以下 userId 為無效的 user: {InvalidUserIds}");
 

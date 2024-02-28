@@ -61,6 +61,12 @@ public partial class HandoverDetailHistory
     [StringLength(2000)]
     public string NewReaderUserNames { get; set; }
 
+    [Column(TypeName = "text")]
+    public string OldFileAttIds { get; set; }
+
+    [Column(TypeName = "text")]
+    public string NewFileAttIds { get; set; }
+
     [Required]
     [StringLength(45)]
     public string Action { get; set; }
