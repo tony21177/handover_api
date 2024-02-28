@@ -1,4 +1,5 @@
 ﻿using handover_api.Models;
+using System.Text.Json.Serialization;
 
 namespace handover_api.Controllers.Dto
 {
@@ -14,6 +15,7 @@ namespace handover_api.Controllers.Dto
         public DateTime? CreatedTime { get; set; }
         public DateTime? UpdatedTime { get; set; }
         public bool? IsActive { get; set; }
+        [JsonIgnore]
         public string FileAttIds { get; set; }
         public List<FileDetailInfo> Files { get; set; } = new List<FileDetailInfo>();
         public bool? IsRead { get; set; }
