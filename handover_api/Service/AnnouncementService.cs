@@ -295,6 +295,11 @@ namespace handover_api.Service
             return newAnnounceAttachments;
         }
 
+        public AnnounceAttachment? GetAttachment(string attId)
+        {
+            return _dbContext.AnnounceAttachments.Where(at => at.AttId == attId).FirstOrDefault();
+        }
+
         public List<AnnounceAttachment> GetAnnounceAttachmentsByAttIds(List<string> attIdList)
         {
             if (attIdList.Count == 0)

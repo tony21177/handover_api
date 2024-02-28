@@ -451,5 +451,26 @@ namespace handover_api.Controllers
             });
         }
 
+        [HttpGet("Attachment/download/{attId}")]
+        [Authorize]
+        public IActionResult DownloadAttatchment(string attId)
+        {
+            var attachment = _announcementService.GetAttachment(attId);
+            if (attachment == null)
+            {
+                return NotFound();
+            }
+            FileDetail fileDetail = new()
+            { 
+                AttId =attachment.AttId,
+                FileName = attachment.FileName,
+                FilePath = attachment.FilePath,
+                FileSizeText = attachment.FileSizeText,
+                FileType = attachment.FileType,
+            };
+            var fileStream = _fileUploadService.Download(fileDetail);
+            return fileStream;
+        }
+
     }
 }
