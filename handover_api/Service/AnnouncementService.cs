@@ -184,8 +184,8 @@ namespace handover_api.Service
                     //_dbContext.AnnouceReaders.Where(annouceReader => userIdsOnlyInOriginalInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
                     //_dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
 
-                    _dbContext.AnnouceReaders.Where(annouceReader => originalUserIdsInReaders.Contains(annouceReader.UserId)).ExecuteDelete();
-                    _dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId)).ExecuteDelete();
+                    _dbContext.AnnouceReaders.Where(annouceReader => originalUserIdsInReaders.Contains(annouceReader.UserId)&&annouceReader.AnnounceId==announceId).ExecuteDelete();
+                    _dbContext.MyAnnouncements.Where(myAnnouncement => originalUserIdsInMyAnnoucements.Contains(myAnnouncement.UserId) && myAnnouncement.AnnounceId == announceId).ExecuteDelete();
                     newUserIdsInReaders.ForEach(
                     userId =>
                     {
