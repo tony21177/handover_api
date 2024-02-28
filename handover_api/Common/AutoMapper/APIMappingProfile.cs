@@ -105,6 +105,8 @@ namespace MaiBackend.Common.AutoMapper
                 //.ForMember(dest => dest.FileAttIds,
                 //           opt => opt.MapFrom(src => src.FileAttIds != null ? src.FileAttIds.Split(',', StringSplitOptions.None).ToList() : null))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverDetailReader, HandoverDetailReaderDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
         //public Dictionary<string, object>? MapSchema(ColumnDefinition src)

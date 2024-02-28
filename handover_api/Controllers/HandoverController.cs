@@ -238,8 +238,15 @@ namespace handover_api.Controllers
             var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
 
             var handoverReaders = _handoverService.GetHandoverDetailReadersByDetailId(handoverDetailId);
+            var handoverReaderDtoList = _mapper.Map<List<HandoverDetailReaderDto>>(handoverReaders);
+            var readersMemberInto = _memberService.GetActiveMembersByUserIds(handoverReaders.Select(hr => hr.UserId).ToList());
+            handoverReaderDtoList.ForEach(dto =>
+            {
+                var matchedReaderMember = readersMemberInto.Find(m => m.UserId == dto.UserId);
+                dto.PhotoUrl = matchedReaderMember?.PhotoUrl;
+            });
 
-            handoverDetailWithReaders.HandoverDetailReader = handoverReaders;
+            handoverDetailWithReaders.HandoverDetailReader = handoverReaderDtoList;
 
 
             return Ok(new CommonResponse<HandoverDetailWithReaders>
