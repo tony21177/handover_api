@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FluentValidation;
-using handover_api.Auth;
 using handover_api.Common;
 using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
@@ -44,12 +43,16 @@ namespace handover_api.Controllers
 
 
         [HttpPost("create")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public IActionResult CreateHandover(CreateHandoverDetailRequest createHandoverDetailRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
             Member creatorMember = memberAndPermissionSetting.Member;
+            if (permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
 
             // 參數驗證
             var validationResult = _createHandoverDetailRequestValidator.Validate(createHandoverDetailRequest);
@@ -108,12 +111,16 @@ namespace handover_api.Controllers
         }
 
         [HttpPost("update")]
-        [AuthorizeRoles("1", "3", "5")]
+        [Authorize]
         public IActionResult UpdateHandover(UpdateHandoverDetailRequest updateHandoverDetailRequest)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
             Member creatorMember = memberAndPermissionSetting.Member;
+            if (permissionSetting == null || !permissionSetting.IsUpdateHandover)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
 
             // 參數驗證
             var validationResult = _updateHandoverDetailRequestValidator.Validate(updateHandoverDetailRequest);
@@ -140,6 +147,36 @@ namespace handover_api.Controllers
             {
                 Result = updatedJsonContent != null,
                 Data = updatedJsonContent,
+            });
+        }
+
+        [HttpDelete("{handoverDetailId}")]
+        [Authorize]
+        public IActionResult InactiveHandoverDetail(string handoverDetailId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (permissionSetting == null || !permissionSetting.IsUpdateHandover)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+
+            var handoverDetail = _handoverService.GetHandoverDetail(handoverDetailId);
+            if (handoverDetail == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此交班表不存在",
+                });
+            }
+
+            var result = _handoverService.InActiveHandoverDetail(handoverDetail);
+
+            return Ok(new CommonResponse<dynamic>
+            {
+                Result = result,
             });
         }
 
