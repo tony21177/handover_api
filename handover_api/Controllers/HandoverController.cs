@@ -2,6 +2,7 @@
 using FluentValidation;
 using handover_api.Auth;
 using handover_api.Common;
+using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Controllers.Validator;
 using handover_api.Models;
@@ -184,12 +185,15 @@ namespace handover_api.Controllers
                 });
             }
 
-
             var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
-            return Ok(new CommonResponse<HandoverDetail>
+            var handoverDetailWithReaders = _mapper.Map<HandoverDetailWithReaders>(handoverDetail);
+            var handoverReaders = _handoverService.GetHandoverDetailReadersByDetailId(handoverDetailId);
+            handoverDetailWithReaders.HandoverDetailReader = handoverReaders;
+
+            return Ok(new CommonResponse<HandoverDetailWithReaders>
             {
                 Result = result,
-                Data = handoverDetail
+                Data = handoverDetailWithReaders
             });
         }
 
