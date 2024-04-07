@@ -18,7 +18,7 @@ namespace handover_api.Service
         }
         public Authlayer? GetByAuthValue(short authValue)
         {
-            return _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).First();
+            return _dbContext.Authlayers.Where(authLayer => authLayer.AuthValue == authValue).FirstOrDefault();
         }
 
         public List<Authlayer> UpdateAuthlayers(List<Authlayer> authlayers)
