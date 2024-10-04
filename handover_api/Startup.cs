@@ -4,10 +4,35 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Enrichers.CallerInfo;
 using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+
+// 配置 Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] [{Caller}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/handover.txt", rollingInterval: RollingInterval.Day, outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] [{Caller}] {Message:lj}{NewLine}{Exception}")
+    .Enrich.FromLogContext()
+    .Enrich.WithCallerInfo(
+        includeFileInfo: true,
+        allowedAssemblies: new List<string> { "Serilog.Enrichers.CallerInfo.Tests" },
+        prefix: "handover_")// 添加这个以捕获调用者信息
+    .CreateLogger();
+
+// 設置 Serilog 作為 Logging Provider
+builder.Host.UseSerilog();
+
+// 創建一個 Serilog LoggerFactory
+var serilogLoggerFactory = LoggerFactory.Create(loggingBuilder =>
+{
+    loggingBuilder.AddSerilog(); // 添加 Serilog 作為 Logger
+});
 
 //services cors
 builder.Services.AddCors(options =>
@@ -33,8 +58,8 @@ var serverVersion = new MySqlServerVersion(new Version(5, 7, 29));
 builder.Services.AddEntityFrameworkMySql().AddDbContext<HandoverContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), serverVersion);
-    options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()))
-           .EnableSensitiveDataLogging();
+    options.UseLoggerFactory(serilogLoggerFactory) // 使用 Serilog 的 LoggerFactory
+           .EnableSensitiveDataLogging(); // 如果需要敏感數據記錄
 }, ServiceLifetime.Scoped);
 
 
