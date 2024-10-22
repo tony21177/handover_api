@@ -36,6 +36,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "category_item",
+         "ObjectType": 0
+      },
+      {
          "Name": "file_detail_info",
          "ObjectType": 0
       },
@@ -49,6 +53,10 @@
       },
       {
          "Name": "handover_detail_readers",
+         "ObjectType": 0
+      },
+      {
+         "Name": "handover_sheet_category_setting",
          "ObjectType": 0
       },
       {
@@ -72,11 +80,11 @@
          "ObjectType": 0
       }
    ],
-   "UiHint": "Mysql_Gary",
+   "UiHint": "local_hand_over",
    "UncountableWords": null,
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
-   "UseDateOnlyTimeOnly": false,
+   "UseDateOnlyTimeOnly": true,
    "UseDbContextSplitting": false,
    "UseDecimalDataAnnotationForSprocResult": true,
    "UseFluentApiOnly": false,
@@ -89,7 +97,7 @@
    "UseNoNavigations": false,
    "UseNoObjectFilter": false,
    "UseNodaTime": false,
-   "UseNullableReferences": false,
+   "UseNullableReferences": true,
    "UsePrefixNavigationNaming": false,
    "UseSchemaFolders": false,
    "UseSchemaNamespaces": false,

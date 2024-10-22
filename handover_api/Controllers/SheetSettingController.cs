@@ -62,6 +62,24 @@ namespace handover_api.Controllers
             return Ok(response);
         }
 
+        [HttpGet("v2/list")]
+        [Authorize]
+        public IActionResult ListV2()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+
+
+            var data = _handoverService.GetAllSettingsV2();
+            var response = new CommonResponse<List<SheetSettingV2>>()
+            {
+                Result = true,
+                Message = "",
+                Data = data
+            };
+            return Ok(response);
+        }
+
 
         [HttpPost("Images/upload")]
         [Authorize]

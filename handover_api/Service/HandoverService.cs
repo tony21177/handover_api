@@ -808,5 +808,54 @@ namespace handover_api.Service
         {
             return _dbContext.FileDetailInfos.Where(fi => fileAttIds.Contains(fi.AttId)).ToList();
         }
+
+
+        public List<CategoryItem> GetAllCategoryItemList()
+        {
+            return _dbContext.CategoryItems.ToList();
+        }
+
+        public List<HandoverSheetCategorySetting> GetAllHandoverSheetCategorySettingList()
+        {
+            return _dbContext.HandoverSheetCategorySettings.ToList();
+        }
+
+        public List<SheetSettingV2> GetAllSettingsV2()
+        {
+            List<HandoverSheetMain> handoverSheetMainList = GetAllHandoverSheetMain();
+            List<SheetSettingV2> sheetSettingDtoList = _mapper.Map<List<SheetSettingV2>>(handoverSheetMainList);
+
+
+            List<HandoverSheetGroup> handoverSheetGroups = GetAllHandoverSheetGroup();
+            List<HandoverSheetGroupDtoV2> handoverSheetGroupDtoList = _mapper.Map<List<HandoverSheetGroupDtoV2>>(handoverSheetGroups);
+            List<HandoverSheetCategorySetting> handoverSheetCategorySettingList = GetAllHandoverSheetCategorySettingList();
+            List<CategoryItem> categoryItems = _dbContext.CategoryItems.ToList();
+
+            handoverSheetGroupDtoList.ForEach(groupDto =>
+            {
+                if (groupDto.SheetGroupId == 303)
+                {
+                    var test = 123;
+                }
+
+                List<HandoverSheetCategorySetting> matchedHandoverSheetCategorySettingList = handoverSheetCategorySettingList.Where(s=>s.SheetGroupId==groupDto.SheetGroupId).ToList();
+
+                List<CategorySettingDto> categorySettingDtoList = _mapper.Map<List<CategorySettingDto>>(matchedHandoverSheetCategorySettingList);
+                foreach (var categorySetting in categorySettingDtoList)
+                {
+                    var matchedCategoryItems = categoryItems.Where(c=>c.CategoryId==categorySetting.CategoryId).ToList();
+                    var matchedCategoryItemDtoList = _mapper.Map<List<CategoryItemDto>>(matchedCategoryItems);
+                    categorySetting.ItemArray = matchedCategoryItemDtoList;
+                }
+                groupDto.CategoryArray = categorySettingDtoList;
+            });
+
+            sheetSettingDtoList.ForEach(settingDto =>
+            {
+                List<HandoverSheetGroupDtoV2> matchedSheetGroupDtoList = handoverSheetGroupDtoList.Where(settingGroupDto => settingGroupDto.MainSheetId == settingDto.SheetId).ToList();
+                settingDto.HandoverSheetGroupList = matchedSheetGroupDtoList;
+            });
+            return sheetSettingDtoList;
+        }
     }
 }

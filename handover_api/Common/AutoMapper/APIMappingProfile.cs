@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using handover_api.Common.Converter;
 using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using System.Globalization;
+using System.Text.Json;
 using Member = handover_api.Models.Member;
 
 namespace MaiBackend.Common.AutoMapper
@@ -49,7 +51,11 @@ namespace MaiBackend.Common.AutoMapper
 
             CreateMap<HandoverSheetMain, SheetSetting>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetMain, SheetSettingV2>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverSheetGroup, HandoverSheetGroupDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverSheetGroup, HandoverSheetGroupDtoV2>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // 目標為null才複製過去
@@ -107,22 +113,31 @@ namespace MaiBackend.Common.AutoMapper
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverDetailReader, HandoverDetailReaderDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Reverse mapping from CategoryItemDto to CategoryItem
+            CreateMap<CategoryItemDto, CategoryItem>()
+                .ForMember(dest => dest.ItemOption, opt =>
+                    opt.MapFrom(src => src.ItemOption != null && src.ItemOption.Count > 0
+                        ? JsonSerializer.Serialize(src.ItemOption,JsonSerializerOptions.Default)
+                        : null));
+
+            // Forward mapping from CategoryItem to CategoryItemDto
+            CreateMap<CategoryItem, CategoryItemDto>()
+                .ForMember(dest => dest.ItemOption, opt =>
+                    opt.MapFrom(src => string.IsNullOrEmpty(src.ItemOption)
+                        ? new List<ItemOption>()
+                        : JsonSerializer.Deserialize<List<ItemOption>>(src.ItemOption, new JsonSerializerOptions
+                        {
+                            Converters = { new ItemOptionJsonConverter() }
+                        })));
+
+
+
+            CreateMap<HandoverSheetCategorySetting, CategorySettingDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
-        //public Dictionary<string, object>? MapSchema(ColumnDefinition src)
-        //{
-        //    var jsonWriterSettings = new JsonWriterSettings { OutputMode = JsonOutputMode.CanonicalExtendedJson };
-        //    if (src.Schema != null)
-        //    {
-        //        return JsonSerializer.Deserialize<Dictionary<string, object>>(
-        //            src.Schema.ToJson(jsonWriterSettings, null, null),
-        //            new JsonSerializerOptions
-        //            {
-        //                WriteIndented = false
-        //            });
-        //    }
-        //    return null;
-        //}
+
 
         public static DateTime? ParseDateString(string? dateString)
         {
