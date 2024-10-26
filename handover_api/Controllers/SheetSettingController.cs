@@ -322,6 +322,46 @@ namespace handover_api.Controllers
             return Ok(response);
         }
 
+        [HttpPost("Category/create")]
+        [Authorize]
+        public IActionResult CreateSettingCategory(CreateSheetSettingCategoryRequest createCategoryListRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || memberAndPermissionSetting.Member == null || permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            if (createCategoryListRequest.CategoryArray.Count == 0)
+            {
+                return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "categoryArray不可為空" });
+            }
+
+
+            var mainSheetId = createCategoryListRequest.MainSheetId;
+            var sheetGroupId = createCategoryListRequest.SheetGroupId;
+            var sheetMain = _handoverService.GetSheetMainByMainSheetId(mainSheetId);
+            if (sheetMain == null)
+            {
+                return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "此MainSheet不存在" });
+            }
+            var sheetGroup = _handoverService.GetSheetGroupBySheetGroupId(sheetGroupId);
+            if (sheetGroup == null)
+            {
+                return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "此SheetGroup不存在" });
+            }
+
+            
+            var (result,errorMsg) = _handoverService.CreateHandoverSheetCategorySetting(createCategoryListRequest);
+            var response = new CommonResponse<HandoverSheetGroup>()
+            {
+                Result = result,
+                Message = errorMsg,
+                Data = null
+            };
+            return Ok(response);
+        }
+
         [HttpPost("Row/update")]
         [Authorize]
         public IActionResult UpdateSettingRow(CreateOrUpdateSheetSettingRowRequest updateSettingRowRequest)

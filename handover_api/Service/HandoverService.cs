@@ -341,6 +341,62 @@ namespace handover_api.Service
 
         }
 
+        public (bool,string?) CreateHandoverSheetCategorySetting( CreateSheetSettingCategoryRequest createRequest)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var newCategorySettingList = new List<HandoverSheetCategorySetting> { };
+
+                createRequest.CategoryArray.ForEach(category =>
+                {
+                    var newCategoryId = Guid.NewGuid().ToString();
+                    var newCategory = new HandoverSheetCategorySetting()
+                    {
+                        CategoryId = newCategoryId,
+                        MainSheetId = createRequest.MainSheetId,
+                        SheetGroupId = createRequest.SheetGroupId,
+                        WeekDays = category.WeekDays,
+                        CategoryName = category.CategoryName,
+                    };
+                    newCategorySettingList.Add(newCategory);
+
+                    // category_item
+                    List<Models.CategoryItem> newCategoryItemList = new();
+                    foreach(var categoryItem in category.ItemArray)
+                    {
+                        var newItemId = Guid.NewGuid().ToString();
+                        var newCategoryItem = new Models.CategoryItem()
+                        {
+                            ItemId = newItemId,
+                            CategoryId = newCategoryId,
+                            ItemType = categoryItem.ItemType,
+                            ItemTitle = categoryItem.ItemTitle,
+                            ItemWidth = categoryItem.ItemWidth,
+                            ItemOption = JsonSerializer.Serialize(categoryItem.ItemOption),
+                        };
+                        newCategoryItemList.Add(newCategoryItem);
+                    }
+                    _dbContext.CategoryItems.AddRange(newCategoryItemList);
+                });
+                
+                _dbContext.HandoverSheetCategorySettings.AddRange(newCategorySettingList);
+
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return (true,null);
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[CreateHandoverSheetCategorySetting]：{msg}", ex.Message);
+                return (false,ex.Message);
+            }
+
+        }
+
         public void DeleteHandoverSheetRow(int sheetRowId)
         {
             ;
@@ -810,7 +866,7 @@ namespace handover_api.Service
         }
 
 
-        public List<CategoryItem> GetAllCategoryItemList()
+        public List<Models.CategoryItem> GetAllCategoryItemList()
         {
             return _dbContext.CategoryItems.ToList();
         }
@@ -829,7 +885,7 @@ namespace handover_api.Service
             List<HandoverSheetGroup> handoverSheetGroups = GetAllHandoverSheetGroup();
             List<HandoverSheetGroupDtoV2> handoverSheetGroupDtoList = _mapper.Map<List<HandoverSheetGroupDtoV2>>(handoverSheetGroups);
             List<HandoverSheetCategorySetting> handoverSheetCategorySettingList = GetAllHandoverSheetCategorySettingList();
-            List<CategoryItem> categoryItems = _dbContext.CategoryItems.ToList();
+            List<Models.CategoryItem> categoryItems = _dbContext.CategoryItems.ToList();
 
             handoverSheetGroupDtoList.ForEach(groupDto =>
             {

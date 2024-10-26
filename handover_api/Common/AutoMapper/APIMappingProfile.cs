@@ -6,6 +6,7 @@ using handover_api.Models;
 using handover_api.Service.ValueObject;
 using System.Globalization;
 using System.Text.Json;
+using CategoryItem = handover_api.Models.CategoryItem;
 using Member = handover_api.Models.Member;
 
 namespace MaiBackend.Common.AutoMapper
@@ -119,7 +120,8 @@ namespace MaiBackend.Common.AutoMapper
                 .ForMember(dest => dest.ItemOption, opt =>
                     opt.MapFrom(src => src.ItemOption != null && src.ItemOption.Count > 0
                         ? JsonSerializer.Serialize(src.ItemOption,JsonSerializerOptions.Default)
-                        : null));
+                        : null))
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null)); 
 
             // Forward mapping from CategoryItem to CategoryItemDto
             CreateMap<CategoryItem, CategoryItemDto>()
@@ -128,8 +130,9 @@ namespace MaiBackend.Common.AutoMapper
                         ? new List<ItemOption>()
                         : JsonSerializer.Deserialize<List<ItemOption>>(src.ItemOption, new JsonSerializerOptions
                         {
-                            Converters = { new ItemOptionJsonConverter() }
+                            //Converters = { new ItemOptionJsonConverter() }
                         })));
+
 
 
 
