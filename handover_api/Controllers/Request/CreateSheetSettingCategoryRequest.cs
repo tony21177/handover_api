@@ -9,7 +9,6 @@ namespace handover_api.Controllers.Request
 
         public int MainSheetId { get; set; }
         public int SheetGroupId { get; set; }
-        public bool? IsActive { get; set; } = true;
 
         public List<Category> CategoryArray { get; set; } = new();
     }

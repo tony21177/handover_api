@@ -397,6 +397,97 @@ namespace handover_api.Service
 
         }
 
+
+        public (bool, string?) UpdateHandoverSheetCategorySetting(UpdateSheetSettingCategoryRequest request)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var newCategorySettingList = new List<HandoverSheetCategorySetting> { };
+
+                var existingCategorySetting = _dbContext.HandoverSheetCategorySettings.Where(s => s.MainSheetId == request.MainSheetId && s.SheetGroupId == request.SheetGroupId).ToList();
+                var existingCategoryIds = existingCategorySetting.Select(s => s.CategoryId).ToList();
+
+                _dbContext.CategoryItems.Where(i => existingCategoryIds.Contains(i.CategoryId)).ExecuteDelete();
+                _dbContext.HandoverSheetCategorySettings.Where(s => existingCategoryIds.Contains(s.CategoryId)).ExecuteDelete();
+
+
+                request.CategoryArray.ForEach(category =>
+                {
+                    var newCategoryId = Guid.NewGuid().ToString();
+                    var newCategory = new HandoverSheetCategorySetting()
+                    {
+                        CategoryId = newCategoryId,
+                        MainSheetId = request.MainSheetId,
+                        SheetGroupId = request.SheetGroupId,
+                        WeekDays = category.WeekDays,
+                        CategoryName = category.CategoryName,
+                    };
+                    newCategorySettingList.Add(newCategory);
+
+                    // category_item
+                    List<Models.CategoryItem> newCategoryItemList = new();
+                    foreach (var categoryItem in category.ItemArray)
+                    {
+                        var newItemId = Guid.NewGuid().ToString();
+                        var newCategoryItem = new Models.CategoryItem()
+                        {
+                            ItemId = newItemId,
+                            CategoryId = newCategoryId,
+                            ItemType = categoryItem.ItemType,
+                            ItemTitle = categoryItem.ItemTitle,
+                            ItemWidth = categoryItem.ItemWidth,
+                            ItemOption = JsonSerializer.Serialize(categoryItem.ItemOption),
+                        };
+                        newCategoryItemList.Add(newCategoryItem);
+                    }
+                    _dbContext.CategoryItems.AddRange(newCategoryItemList);
+                });
+
+                _dbContext.HandoverSheetCategorySettings.AddRange(newCategorySettingList);
+
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[UpdateHandoverSheetCategorySetting]：{msg}", ex.Message);
+                return (false, ex.Message);
+            }
+
+        }
+
+        public (bool, string?) DeleteHandoverSheetCategorySetting(DeleteSheetSettingCategoryRequest request)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                var existingCategorySetting = _dbContext.HandoverSheetCategorySettings.Where(s => s.MainSheetId == request.MainSheetId && s.SheetGroupId == request.SheetGroupId).ToList();
+                var existingCategoryIds = existingCategorySetting.Select(s => s.CategoryId).ToList();
+
+                _dbContext.CategoryItems.Where(i => existingCategoryIds.Contains(i.CategoryId)).ExecuteDelete();
+                _dbContext.HandoverSheetCategorySettings.Where(s => existingCategoryIds.Contains(s.CategoryId)).ExecuteDelete();
+
+                
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[DeleteHandoverSheetCategorySetting]：{msg}", ex.Message);
+                return (false, ex.Message);
+            }
+
+        }
+
         public void DeleteHandoverSheetRow(int sheetRowId)
         {
             ;
