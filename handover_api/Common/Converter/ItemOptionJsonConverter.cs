@@ -31,6 +31,9 @@ namespace handover_api.Common.Converter
                     case "comment":
                         itemOption.Comment = reader.GetString();
                         break;
+                    case "index":
+                        itemOption.Index = (int?)reader.GetUInt64();
+                        break;
                     case "tableInfo":
                         // 讀取 tableInfo JSON 並轉換為 Dictionary
                         using (JsonDocument doc = JsonDocument.ParseValue(ref reader))

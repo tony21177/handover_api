@@ -16,6 +16,7 @@ namespace handover_api.Service.ValueObject
         public string? OptionName { get; set; }
         public string? Type { get; set; } = null!;
         public string? Comment { get; set; }
+        public int? Index { get; set; } = null!;
         public Dictionary<string, object>? TableInfo { get; set; }
     }
 }
