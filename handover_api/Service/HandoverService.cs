@@ -444,7 +444,10 @@ namespace handover_api.Service
                     _dbContext.CategoryItems.AddRange(newCategoryItemList);
                 });
 
-                _dbContext.HandoverSheetCategorySettings.AddRange(newCategorySettingList);
+                if (newCategorySettingList.Count > 0)
+                {
+                    _dbContext.HandoverSheetCategorySettings.AddRange(newCategorySettingList);
+                }
 
                 _dbContext.SaveChanges(true);
                 // 提交事務

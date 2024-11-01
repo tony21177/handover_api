@@ -372,10 +372,10 @@ namespace handover_api.Controllers
             {
                 return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
             }
-            if (updateCategoryListRequest.CategoryArray.Count == 0)
-            {
-                return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "categoryArray不可為空" });
-            }
+            //if (updateCategoryListRequest.CategoryArray.Count == 0)
+            //{
+            //    return BadRequest(new CommonResponse<dynamic> { Result = false, Message = "categoryArray不可為空" });
+            //}
 
 
             var mainSheetId = updateCategoryListRequest.MainSheetId;
