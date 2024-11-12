@@ -56,6 +56,19 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetMains.Where(m => mainSheetIdList.Contains(m.SheetId)).ToList();
         }
 
+        public (List<HandoverSheetMain>,List<HandoverSheetGroup>) GetSheetMainListByCategoryIdList(List<string> categoryIdList)
+        {
+            List<HandoverSheetCategorySetting> categorySettingList = _dbContext.HandoverSheetCategorySettings.Where(s => categoryIdList.Contains(s.CategoryId)).ToList();
+
+            List<int> mainSheetIdList = categorySettingList.Select(row => row.MainSheetId.Value).ToList();
+            List<int> sheetGroupIdList = categorySettingList.Select(row => row.SheetGroupId.Value).ToList();
+
+            var mainSheets = _dbContext.HandoverSheetMains.Where(m => mainSheetIdList.Contains(m.SheetId)).ToList();
+            var groupSheets = _dbContext.HandoverSheetGroups.Where(g => sheetGroupIdList.Contains(g.SheetGroupId)).ToList();
+
+            return (mainSheets,groupSheets);
+        }
+
         //public List<HandoverSheetRow> GetSheetRowsByMainSheetId(int mainSheetId)
         //{
         //    return _dbContext.HandoverSheetRows.Where(r => r.MainSheetId == mainSheetId).ToList();
@@ -92,6 +105,11 @@ namespace handover_api.Service
                         };
 
             return query.ToList();
+        }
+
+        public List<HandoverSheetCategorySetting> GetCategorySettingsByMainSheetIdAndGroupId(int mainSheetId,int groupSheetId)
+        {
+            return _dbContext.HandoverSheetCategorySettings.Where(s=>s.MainSheetId==mainSheetId&&s.SheetGroupId==groupSheetId).ToList();
         }
         public HandoverDetail? GetHandoverDetail(string handoverDetailId)
         {
@@ -595,6 +613,74 @@ namespace handover_api.Service
                 Title = title,
                 HandoverDetailId = Guid.NewGuid().ToString(),
                 MainSheetId = mainSheetId,
+                JsonContent = jsonContent,
+                CreatorId = creator.UserId,
+                CreatorName = creator.DisplayName,
+                FileAttIds = string.Join(",", fileAttIdList),
+            };
+            if (content != null)
+            {
+                newHandoverDetail.Content = content;
+            }
+
+
+            using var scope = new TransactionScope();
+            try
+            {
+                _dbContext.HandoverDetails.Add(newHandoverDetail);
+                List<HandoverDetailReader> handoverDetailReaders = readerMemberList.Select(reader =>
+                {
+                    HandoverDetailReader handoverReader = new()
+                    {
+                        HandoverDetailId = newHandoverDetail.HandoverDetailId,
+                        UserId = reader.UserId,
+                        UserName = reader.DisplayName,
+                        IsRead = false,
+
+
+                    };
+                    return handoverReader;
+                }).ToList();
+                _dbContext.HandoverDetailReaders.AddRange(handoverDetailReaders);
+                AddHandoverDetailHistory(newHandoverDetail, null, newHandoverDetail.Title, null, newHandoverDetail.Content,
+                        null, readerMemberList.Select(m => m.UserId).ToList(), null, readerMemberList.Select(m => m.DisplayName).ToList(), null, newHandoverDetail.JsonContent, null, newHandoverDetail.FileAttIds
+                        , Enum.GetName(ActionTypeEnum.Create));
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return jsonContent;
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[CreateHandOverDetail]：{msg}", ex.Message);
+                _logger.LogError("事務失敗[CreateHandOverDetail]：{StackTrace}", ex.StackTrace);
+                return null;
+            }
+        }
+
+
+        public string? CreateHandOverDetailV2(int mainSheetId,int sheetGroupId, List<CategoryListRequest> categoryArray, String? title, String? content, List<Member> readerMemberList, Member creator, List<string> fileAttIdList)
+        {
+            if (categoryArray.Count == 0) { return null; }
+
+            var mainSheetSetting = GetSheetMainByMainSheetId(mainSheetId);
+            List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(mainSheetId).Where(group => group.IsActive == true).ToList();
+            List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
+            
+            List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
+           
+
+            string jsonContent = System.Text.Json.JsonSerializer.Serialize(categoryArray);
+
+            // 新增handover_detail
+            HandoverDetail newHandoverDetail = new()
+            {
+                Title = title,
+                HandoverDetailId = Guid.NewGuid().ToString(),
+                MainSheetId = mainSheetId,
+                SheetGroupId = sheetGroupId,
                 JsonContent = jsonContent,
                 CreatorId = creator.UserId,
                 CreatorName = creator.DisplayName,

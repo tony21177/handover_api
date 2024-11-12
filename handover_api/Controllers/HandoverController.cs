@@ -27,6 +27,7 @@ namespace handover_api.Controllers
         private readonly MemberService _memberService;
         private readonly FileUploadService _fileUploadService;
         private readonly CreateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
+        private readonly CreateHandoverDetailRequestV2Validator _createHandoverDetailRequestV2Validator;
         private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
 
         public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService, FileUploadService fileUploadService)
@@ -37,6 +38,7 @@ namespace handover_api.Controllers
             _handoverService = handoverService;
             _memberService = memberService;
             _createHandoverDetailRequestValidator = new CreateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
+            _createHandoverDetailRequestV2Validator = new CreateHandoverDetailRequestV2Validator(ActionTypeEnum.Create, _memberService);
             _updateHandoverDetailRequestValidator = new UpdateHandoverDetailRequestValidator(_memberService);
             _fileUploadService = fileUploadService;
         }
@@ -108,6 +110,137 @@ namespace handover_api.Controllers
                 Result = createdJsonContent != null,
                 Data = createdJsonContent,
             });
+        }
+
+        [HttpPost("v2/create")]
+        [Authorize]
+        public IActionResult CreateHandoverV2(CreateHandoverDetailV2Request createHandoverDetailRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member creatorMember = memberAndPermissionSetting.Member;
+            if (permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            // 參數驗證
+            var validationResult = _createHandoverDetailRequestV2Validator.Validate(createHandoverDetailRequest);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            
+            // 檢查userId
+            var activeMembers = _memberService.GetAllMembers().Where(m=>m.IsActive==true).ToList();
+            var activeUserIdList = activeMembers.Select(m => m.UserId).ToList();
+            var readerUids = new List<string>();
+
+
+            if (createHandoverDetailRequest.categoryArray.Any())
+            {
+                List<string> invalidUids = new();
+                foreach (var category in createHandoverDetailRequest.categoryArray)
+                {
+                    if (category.ItemArray.Any())
+                    {
+                        foreach (var categoryItemValues in category.ItemArray)
+                        {
+                            if (categoryItemValues.ItemOption.Any())
+                            {
+                                foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
+                                {
+                                    if (itemOptionAndValues.Values != null)
+                                    {
+                                        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
+                                        if (userIds != null && userIds.Any())
+                                        {
+                                            invalidUids.AddRange(userIds.Except(activeUserIdList));
+                                            readerUids.AddRange(userIds);
+                                        }
+
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    if (invalidUids.Any())
+                    {
+                        return BadRequest(new CommonResponse<dynamic>
+                        {
+                            Result = false,
+                            Message = $"{string.Join(",", invalidUids)}為無效 userId"
+                        });
+                    }
+                }
+
+
+                // 驗證是否同屬一個main
+                var categoryIdList = createHandoverDetailRequest.categoryArray.Select(c => c.CategoryId).ToList();
+                var (matchedSheetMainSettings, matchedGroupSheetSettings) = _handoverService.GetSheetMainListByCategoryIdList(categoryIdList);
+                var matchedSheetMainIdList = matchedSheetMainSettings.Select(main => main.SheetId).ToList();
+                var matchedSheetGroupIdList = matchedGroupSheetSettings.Select(group => group.SheetGroupId).ToList();
+                bool isTheSameMainId = matchedSheetMainSettings.Distinct().Count() == 1;
+                bool isTheSameGroupId = matchedSheetGroupIdList.Distinct().Count() == 1;
+                if (!isTheSameMainId)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "不可跨交班main setting"
+                    });
+                }
+                if (!isTheSameGroupId)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "不可跨交班group setting"
+                    });
+                }
+                if (matchedSheetMainSettings[0].IsActive == null || matchedSheetMainSettings[0].IsActive == false)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = "此交班表設定為失效狀態"
+                    });
+                }
+
+                var neededSheetCategorySettingList = _handoverService.GetCategorySettingsByMainSheetIdAndGroupId(matchedSheetMainIdList[0], matchedSheetGroupIdList[0]);
+                var neededSheetCategoryCount = neededSheetCategorySettingList.Count;
+                if (neededSheetCategoryCount != createHandoverDetailRequest.categoryArray.Count)
+                {
+                    return BadRequest(new CommonResponse<dynamic>
+                    {
+                        Result = false,
+                        Message = $"交班單的Category筆數:{createHandoverDetailRequest.categoryArray.Count}不對,需要{neededSheetCategoryCount}筆"
+                    });
+                }
+
+                List<Member> readerMemberList = _memberService.GetMembersByUserIdList(readerUids);
+
+                if (readerMemberList.Find(m => m.UserId == creatorMember.UserId) == null)
+                {
+                    readerMemberList.Add(creatorMember);
+                }
+
+                var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], matchedSheetGroupIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
+
+                return Ok(new CommonResponse<string?>
+                {
+                    Result = createdJsonContent != null,
+                    Data = createdJsonContent,
+                });
+            }
+            return BadRequest(new CommonResponse<string?>
+            {
+                Result = false,
+                Message = "categoryArray不可為空"
+            });
+            
         }
 
         [HttpPost("update")]

@@ -24,6 +24,9 @@ public partial class HandoverDetail
     [Column("MainSheetID")]
     public int MainSheetId { get; set; }
 
+    [Column("SheetGroupID")]
+    public int? SheetGroupId { get; set; }
+
     [Column(TypeName = "json")]
     public string? JsonContent { get; set; }
 

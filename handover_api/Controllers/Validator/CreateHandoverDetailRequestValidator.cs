@@ -16,7 +16,7 @@ namespace handover_api.Controllers.Validator
             if (action == ActionTypeEnum.Create)
             {
                 RuleFor(x => x.RowDetails).NotEmpty().WithMessage("rowDetails為必須");
-                RuleFor(x => x.Title).NotEmpty().WithMessage("titile為必須");
+                RuleFor(x => x.Title).NotEmpty().WithMessage("title為必須");
             }
 
             RuleFor(x => x.ReaderUserIds)
