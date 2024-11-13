@@ -6,6 +6,12 @@ namespace handover_api.Service.ValueObject
     public class CategoryListRequest
     {
         public string CategoryId { get; set; } = null!;
+        public string? WeekDays { get; set; }
+        public int? MainSheetId { get; set; }
+        public int? SheetGroupId { get; set; }
+        public string? CategoryName { get; set; }
+        public DateTime? CreatedTime { get; set; }    
+        public DateTime? updatedTime { get; set; }    
 
         public List<CategoryItemValuesDto> ItemArray { get; set; } = new();
 

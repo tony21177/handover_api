@@ -670,6 +670,23 @@ namespace handover_api.Service
             List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
             
             List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
+
+            var categorySettings = _dbContext.HandoverSheetCategorySettings.ToList();
+
+            categoryArray.ForEach(category =>
+            {
+                var matchedCategory = categorySettings.Find(c => c.CategoryId == category.CategoryId);
+                if (matchedCategory != null)
+                {
+                    category.MainSheetId = matchedCategory.MainSheetId;
+                    category.SheetGroupId = matchedCategory.SheetGroupId;
+                    category.WeekDays = matchedCategory.WeekDays;
+                    category.CategoryName = matchedCategory.CategoryName;   
+                    category.CreatedTime = matchedCategory.CreatedTime;
+                    category.updatedTime = matchedCategory.UpdatedTime;
+                }
+            });
+
            
 
             string jsonContent = System.Text.Json.JsonSerializer.Serialize(categoryArray);
