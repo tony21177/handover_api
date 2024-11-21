@@ -661,7 +661,7 @@ namespace handover_api.Service
         }
 
 
-        public string? CreateHandOverDetailV2(int mainSheetId,int sheetGroupId, List<CategoryListRequest> categoryArray, String? title, String? content, List<Member> readerMemberList, Member creator, List<string> fileAttIdList)
+        public string? CreateHandOverDetailV2(int mainSheetId,int sheetGroupId, List<CategoryComponent> categoryArray, String? title, String? content, List<Member> readerMemberList, Member creator, List<string> fileAttIdList)
         {
             if (categoryArray.Count == 0) { return null; }
 

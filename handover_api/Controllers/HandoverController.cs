@@ -12,7 +12,10 @@ using MaiBackend.Common.AutoMapper;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using static handover_api.Service.ValueObject.CategoryComponent;
 
 namespace handover_api.Controllers
 {
@@ -149,21 +152,28 @@ namespace handover_api.Controllers
                         {
                             if (categoryItemValues.ItemOption.Any())
                             {
-                                foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
-                                {
-                                    if (itemOptionAndValues.Values != null)
-                                    {
-                                        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
-                                        if (userIds != null && userIds.Any())
-                                        {
-                                            invalidUids.AddRange(userIds.Except(activeUserIdList));
-                                            readerUids.AddRange(userIds);
-                                        }
+                                //foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
+                                //{
+                                //    if (itemOptionAndValues.Values != null)
+                                //    {
+                                //        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
+                                //        if (userIds != null && userIds.Any())
+                                //        {
+                                //            invalidUids.AddRange(userIds.Except(activeUserIdList));
+                                //            readerUids.AddRange(userIds);
+                                //        }
 
-                                    }
-                                }
+                                //    }
+                                //}
 
                             }
+                            if (categoryItemValues.Values != null&& categoryItemValues.Values.RemarkAssignUserIDValue!=null && categoryItemValues.Values.RemarkAssignUserIDValue.Count>0)
+                            {
+                                var userIds = categoryItemValues.Values.RemarkAssignUserIDValue;
+                                invalidUids.AddRange(userIds.Except(activeUserIdList));
+                                readerUids.AddRange(userIds);
+                            }
+
                         }
                     }
                     if (invalidUids.Any())
@@ -374,6 +384,77 @@ namespace handover_api.Controllers
 
 
             return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
+            {
+                Result = true,
+                Data = handoverDetailWithReadDtoList
+            });
+        }
+
+        [HttpPost("v2/search")]
+        [Authorize]
+        public IActionResult SearchHandoverDetailsV2(SearchHandoverDetailRequest searchHandoverDetailRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member loginMember = memberAndPermissionSetting.Member;
+
+            if ((searchHandoverDetailRequest.StartDate != null && !Regex.IsMatch(searchHandoverDetailRequest.StartDate, @"^\d{3}/\d{2}/\d{2}$"))
+                || (searchHandoverDetailRequest.EndDate != null && !Regex.IsMatch(searchHandoverDetailRequest.EndDate, @"^\d{3}/\d{2}/\d{2}$")))
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "時間格式必需為yyy/mm/dd",
+                });
+            }
+            var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
+            var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
+            endDate = endDate?.AddDays(1);
+            List<HandoverDetail> handoverDetailList = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
+                searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
+
+            List<HandoverDetailWithReadV2Dto> handoverDetailWithReadDtoList = _mapper.Map<List<HandoverDetailWithReadV2Dto>>(handoverDetailList);
+
+            var handoverReaderList = _handoverService.GetHandoverDetailReadersByUserId(loginMember.UserId);
+
+            List<string> fileAttIdsList = handoverDetailList.Select(hd => hd.FileAttIds).ToList();
+            HashSet<string> allDistinctfileAttIds = new();
+            fileAttIdsList.ForEach(fileAttIdsString =>
+            {
+                var fileAttIdsList = fileAttIdsString.Split(",");
+                foreach (var fileAttId in fileAttIdsList)
+                {
+                    allDistinctfileAttIds.Add(fileAttId);
+                }
+            });
+            List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(allDistinctfileAttIds.ToList());
+
+
+
+            handoverDetailWithReadDtoList.ForEach(dto =>
+            {
+                var matchedReader = handoverReaderList.Find(reader => reader.HandoverDetailId == dto.HandoverDetailId);
+                if (matchedReader != null)
+                {
+                    dto.IsRead = matchedReader.IsRead;
+                }
+                else
+                {
+                    // 如果不在 readUser 名單內，視為已讀
+                    dto.IsRead = true;
+                }
+                var fileAttIdList = dto.FileAttIds.Split(",");
+                List<FileDetailInfo> matchedFiles = fileDetailInfos.Where(fdi => fileAttIdList.Contains(fdi.AttId)).ToList();
+                dto.Files = matchedFiles;
+
+                dto.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.JsonContent);
+            });
+
+
+
+
+
+            return Ok(new CommonResponse<List<HandoverDetailWithReadV2Dto>>
             {
                 Result = true,
                 Data = handoverDetailWithReadDtoList

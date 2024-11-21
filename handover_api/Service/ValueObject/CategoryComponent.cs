@@ -3,7 +3,7 @@
 namespace handover_api.Service.ValueObject
 {
 
-    public class CategoryListRequest
+    public class CategoryComponent
     {
         public string CategoryId { get; set; } = null!;
         public string? WeekDays { get; set; }
@@ -22,6 +22,7 @@ namespace handover_api.Service.ValueObject
             public string? ItemTitle { get; set; }
             public string ItemWidth { get; set; } = null!;
             public List<ItemOptionAndValues> ItemOption { get; set; } = new();
+            public ItemOptionValues? Values { get; set; }
         }
 
         public class ItemOptionAndValues
@@ -32,7 +33,6 @@ namespace handover_api.Service.ValueObject
             public int? Index { get; set; } = null!;
             public Dictionary<string, object>? TableInfo { get; set; }
 
-            public ItemOptionValues? Values { get; set; }
         }
 
         public class ItemOptionValues
