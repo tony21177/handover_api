@@ -22,7 +22,7 @@ namespace handover_api.Service.ValueObject
             public string? ItemTitle { get; set; }
             public string ItemWidth { get; set; } = null!;
             public List<ItemOptionAndValues> ItemOption { get; set; } = new();
-            public ItemOptionValues? Values { get; set; }
+            
         }
 
         public class ItemOptionAndValues
@@ -31,18 +31,26 @@ namespace handover_api.Service.ValueObject
             public string? Type { get; set; } = null!;
             public string? Comment { get; set; }
             public int? Index { get; set; } = null!;
-            public Dictionary<string, object>? TableInfo { get; set; }
+            public TableInfo? TableInfo { get; set; }
+            public ItemOptionValues? Values { get; set; }
 
+        }
+        public class TableInfo
+        {
+            public int ColCount { get; set; }
+            public int RowCount { get; set; }
+            public List<string>? RowHeader { get; set; }
+            public List<string>? ColumnHeader { get; set; }
         }
 
         public class ItemOptionValues
         {
-            public List<string>? OptionValue { get; set; }
+            public List<string>? OptionValue { get; set; } = new List<string> ();
             public string? CommentValue { get; set; }
-            public List<string>? TableValue { get; set; }
-            public List<string>? RemarkAssignUserNameValue { get; set; }
+            public List<string>? TableValue { get; set; } = new List<string>();
+            public List<string>? RemarkAssignUserNameValue { get; set; } = new List<string>();
 
-            public List<string>? RemarkAssignUserIDValue { get; set; }
+            public List<string>? RemarkAssignUserIDValue { get; set; } = new List<string>();
         }
     }
 }

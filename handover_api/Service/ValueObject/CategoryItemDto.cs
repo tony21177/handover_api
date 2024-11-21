@@ -19,6 +19,7 @@ namespace handover_api.Service.ValueObject
         public int? Index { get; set; } = null!;
         public Dictionary<string, object>? TableInfo { get; set; }
         public ItemOptionValues Values  {get;set;} = new ItemOptionValues();
+        
     }
 
     public class ItemOptionValues
