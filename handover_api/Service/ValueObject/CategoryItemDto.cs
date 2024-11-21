@@ -23,10 +23,10 @@ namespace handover_api.Service.ValueObject
 
     public class ItemOptionValues
     {
-        public List<string>? optionValue {get;set;}
+        public List<string> optionValue {get;set;} = new List<string>();
         public string? commentValue {get;set;}
-        public List<string>? tableValue {get;set;}
-        public List<string>? remarkAssignUserNameValue {get;set;}
-        public List<string>? remarkAssignUserIDValue {get;set;}
+        public List<string> tableValue {get;set;} = new List<string>();
+        public List<string> remarkAssignUserNameValue {get;set;} = new List<string>();
+        public List<string> remarkAssignUserIDValue {get;set;} = new List<string>();
     }
 }
