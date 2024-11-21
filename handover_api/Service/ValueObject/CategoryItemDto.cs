@@ -9,6 +9,7 @@ namespace handover_api.Service.ValueObject
         public string? ItemTitle { get; set; } 
         public string ItemWidth { get; set; } = null!;
         public List<ItemOption> ItemOption { get; set; } = new();
+        public ItemOptionValues Values  {get;set;} = new ItemOptionValues();
     }
 
     public class ItemOption
@@ -18,7 +19,6 @@ namespace handover_api.Service.ValueObject
         public string? Comment { get; set; }
         public int? Index { get; set; } = null!;
         public Dictionary<string, object>? TableInfo { get; set; }
-        public ItemOptionValues Values  {get;set;} = new ItemOptionValues();
     }
 
     public class ItemOptionValues
