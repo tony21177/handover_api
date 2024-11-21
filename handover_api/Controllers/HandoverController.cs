@@ -152,27 +152,27 @@ namespace handover_api.Controllers
                         {
                             if (categoryItemValues.ItemOption.Any())
                             {
-                                //foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
-                                //{
-                                //    if (itemOptionAndValues.Values != null)
-                                //    {
-                                //        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
-                                //        if (userIds != null && userIds.Any())
-                                //        {
-                                //            invalidUids.AddRange(userIds.Except(activeUserIdList));
-                                //            readerUids.AddRange(userIds);
-                                //        }
+                                foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
+                                {
+                                    if (itemOptionAndValues.Values != null)
+                                    {
+                                        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
+                                        if (userIds != null && userIds.Any())
+                                        {
+                                            invalidUids.AddRange(userIds.Except(activeUserIdList));
+                                            readerUids.AddRange(userIds);
+                                        }
 
-                                //    }
-                                //}
+                                    }
+                                }
 
                             }
-                            if (categoryItemValues.Values != null&& categoryItemValues.Values.RemarkAssignUserIDValue!=null && categoryItemValues.Values.RemarkAssignUserIDValue.Count>0)
-                            {
-                                var userIds = categoryItemValues.Values.RemarkAssignUserIDValue;
-                                invalidUids.AddRange(userIds.Except(activeUserIdList));
-                                readerUids.AddRange(userIds);
-                            }
+                            //if (categoryItemValues.Values != null&& categoryItemValues.Values.RemarkAssignUserIDValue!=null && categoryItemValues.Values.RemarkAssignUserIDValue.Count>0)
+                            //{
+                            //    var userIds = categoryItemValues.Values.RemarkAssignUserIDValue;
+                            //    invalidUids.AddRange(userIds.Except(activeUserIdList));
+                            //    readerUids.AddRange(userIds);
+                            //}
 
                         }
                     }
