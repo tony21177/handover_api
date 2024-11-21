@@ -18,5 +18,15 @@ namespace handover_api.Service.ValueObject
         public string? Comment { get; set; }
         public int? Index { get; set; } = null!;
         public Dictionary<string, object>? TableInfo { get; set; }
+        public ItemOptionValues Values  {get;set;} = new ItemOptionValues();
+    }
+
+    public class ItemOptionValues
+    {
+        public List<string>? optionValue {get;set;}
+        public string? commentValue {get;set;}
+        public List<string>? tableValue {get;set;}
+        public List<string>? remarkAssignUserNameValue {get;set;}
+        public List<string>? remarkAssignUserIDValue {get;set;}
     }
 }
