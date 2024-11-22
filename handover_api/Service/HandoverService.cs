@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using handover_api.Controllers.Dto;
 using handover_api.Controllers.Request;
 using handover_api.Models;
 using handover_api.Service.ValueObject;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Text.Json;
 using System.Transactions;
 
@@ -1037,6 +1039,33 @@ namespace handover_api.Service
                         myHandoverDetailDto.IsRead = dr.IsRead;
                         myHandoverDetailDto.ReadTime = dr.ReadTime;
                         myHandoverDetailDtoList.Add(myHandoverDetailDto);
+                    }
+                });
+                return myHandoverDetailDtoList;
+            }
+            return new();
+        }
+
+        public List<MyHandoverDetailV2Dto> GetMyHandoverDetailDtoListV2(string userId)
+        {
+            List<HandoverDetailReader> handoverDetailReaders = _dbContext.HandoverDetailReaders.Where(rd => rd.UserId == userId).ToList();
+
+            if (handoverDetailReaders.Count != 0)
+            {
+                List<MyHandoverDetailV2Dto> myHandoverDetailDtoList = new();
+                List<string> allDistinctHandoverDetailIdList = handoverDetailReaders.Select(r => r.HandoverDetailId).Distinct().ToList();
+                List<HandoverDetail> handoverDetails = GetHandoverDetailByDetailIds(allDistinctHandoverDetailIdList);
+                handoverDetailReaders.ForEach(dr =>
+                {
+                    var matchedDetail = handoverDetails.Find(d => d.HandoverDetailId == dr.HandoverDetailId);
+                    if (matchedDetail != null)
+                    {
+                        MyHandoverDetailV2Dto myHandoverDetailDto = _mapper.Map<MyHandoverDetailV2Dto>(matchedDetail);
+                        myHandoverDetailDto.IsRead = dr.IsRead;
+                        myHandoverDetailDto.ReadTime = dr.ReadTime;
+                        myHandoverDetailDto.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(myHandoverDetailDto.JsonContent);
+                        myHandoverDetailDtoList.Add(myHandoverDetailDto);
+
                     }
                 });
                 return myHandoverDetailDtoList;

@@ -104,6 +104,8 @@ namespace MaiBackend.Common.AutoMapper
 
             CreateMap<HandoverDetail, MyHandoverDetailDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverDetail, MyHandoverDetailV2Dto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverDetail, HandoverDetailWithReaders>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverDetail, HandoverDetailDto>()
@@ -113,7 +115,8 @@ namespace MaiBackend.Common.AutoMapper
                 //           opt => opt.MapFrom(src => src.FileAttIds != null ? src.FileAttIds.Split(',', StringSplitOptions.None).ToList() : null))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverDetail, HandoverDetailWithReadV2Dto>()
-                
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<HandoverDetail, HandoverDetailWithReadersV2>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<HandoverDetailReader, HandoverDetailReaderDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));

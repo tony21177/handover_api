@@ -507,6 +507,55 @@ namespace handover_api.Controllers
             });
         }
 
+        [HttpGet("v2/detail/{handoverDetailId}")]
+        [Authorize]
+        public IActionResult ReadHandoverDetailV2(string handoverDetailId)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member reader = memberAndPermissionSetting.Member;
+            var handoverDetail = _handoverService.GetHandoverDetailByDetailId(handoverDetailId);
+            if (handoverDetail == null)
+            {
+                return BadRequest(new CommonResponse<HandoverDetail>
+                {
+                    Result = false,
+                    Message = "此交班表不存在",
+                });
+            }
+            HandoverDetailWithReadersV2 handoverDetailWithReaders = _mapper.Map<HandoverDetailWithReadersV2>(handoverDetail);
+
+            if (!string.IsNullOrEmpty(handoverDetail.FileAttIds))
+            {
+                List<string> fileAttIds = handoverDetail.FileAttIds.Split(",").ToList();
+                List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
+                handoverDetailWithReaders.Files = fileDetailInfos;
+            }
+
+            var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
+
+            var handoverReaders = _handoverService.GetHandoverDetailReadersByDetailId(handoverDetailId);
+            var handoverReaderDtoList = _mapper.Map<List<HandoverDetailReaderDto>>(handoverReaders);
+            var readersMemberInto = _memberService.GetActiveMembersByUserIds(handoverReaders.Select(hr => hr.UserId).ToList());
+            handoverReaderDtoList.ForEach(dto =>
+            {
+                var matchedReaderMember = readersMemberInto.Find(m => m.UserId == dto.UserId);
+                dto.PhotoUrl = matchedReaderMember?.PhotoUrl;
+
+            });
+
+            handoverDetailWithReaders.HandoverDetailReader = handoverReaderDtoList;
+            handoverDetailWithReaders.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetailWithReaders.JsonContent);
+
+
+
+            return Ok(new CommonResponse<HandoverDetailWithReadersV2>
+            {
+                Result = result,
+                Data = handoverDetailWithReaders
+            });
+        }
+
         [HttpGet("detail/my")]
         [Authorize]
         public IActionResult GetMyHandoverDetail()
@@ -524,6 +573,29 @@ namespace handover_api.Controllers
                 }
             }
             return Ok(new CommonResponse<List<MyHandoverDetailDto>>
+            {
+                Result = true,
+                Data = handoverDetailDtoList
+            });
+        }
+
+        [HttpGet("v2/detail/my")]
+        [Authorize]
+        public IActionResult GetMyHandoverDetailV2()
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            Member reader = memberAndPermissionSetting.Member;
+            var handoverDetailDtoList = _handoverService.GetMyHandoverDetailDtoListV2(reader.UserId);
+            foreach (var handoverDetailDto in handoverDetailDtoList)
+            {
+                if (!string.IsNullOrEmpty(handoverDetailDto.FileAttIds))
+                {
+                    List<string> fileAttIds = handoverDetailDto.FileAttIds.Split(",").ToList();
+                    List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
+                    handoverDetailDto.Files = fileDetailInfos;
+                }
+            }
+            return Ok(new CommonResponse<List<MyHandoverDetailV2Dto>>
             {
                 Result = true,
                 Data = handoverDetailDtoList
