@@ -393,7 +393,7 @@ namespace handover_api.Service
                             ItemType = categoryItem.ItemType,
                             ItemTitle = categoryItem.ItemTitle,
                             ItemWidth = categoryItem.ItemWidth,
-                            ItemOption = JsonSerializer.Serialize(categoryItem.ItemOption),
+                            ItemOption = System.Text.Json.JsonSerializer.Serialize(categoryItem.ItemOption),
                         };
                         newCategoryItemList.Add(newCategoryItem);
                     }
@@ -457,7 +457,7 @@ namespace handover_api.Service
                             ItemType = categoryItem.ItemType,
                             ItemTitle = categoryItem.ItemTitle,
                             ItemWidth = categoryItem.ItemWidth,
-                            ItemOption = JsonSerializer.Serialize(categoryItem.ItemOption),
+                            ItemOption = System.Text.Json.JsonSerializer.Serialize(categoryItem.ItemOption),
                         };
                         newCategoryItemList.Add(newCategoryItem);
                     }
@@ -758,7 +758,7 @@ namespace handover_api.Service
             string? newJsonContent;
             try
             {
-                HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = JsonSerializer.Deserialize<HandoverSheetRowDetailAndSettings>(oldJsonContent);
+                HandoverSheetRowDetailAndSettings handoverSheetRowDetailAndSettings = System.Text.Json.JsonSerializer.Deserialize<HandoverSheetRowDetailAndSettings>(oldJsonContent);
                 List<RowSettingAndDetail> allOriginalRowSettingAndDetail = new();
                 if (handoverSheetRowDetailAndSettings == null)
                 {
@@ -783,7 +783,7 @@ namespace handover_api.Service
                             matchedOriginalRowDetail.Comment = rowDetail.Comment;
                         }
                     });
-                    newJsonContent = JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
+                    newJsonContent = System.Text.Json.JsonSerializer.Serialize(handoverSheetRowDetailAndSettings);
                 }
 
                 List<HandoverDetailReader> handoverDetailReaders = GetHandoverDetailReadersByDetailId(handoverDetail.HandoverDetailId);
