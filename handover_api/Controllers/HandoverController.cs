@@ -532,7 +532,7 @@ namespace handover_api.Controllers
                 handoverDetailWithReaders.Files = fileDetailInfos;
             }
 
-            var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
+            //var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
 
             var handoverReaders = _handoverService.GetHandoverDetailReadersByDetailId(handoverDetailId);
             var handoverReaderDtoList = _mapper.Map<List<HandoverDetailReaderDto>>(handoverReaders);
