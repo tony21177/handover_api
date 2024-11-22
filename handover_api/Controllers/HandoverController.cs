@@ -134,58 +134,17 @@ namespace handover_api.Controllers
                 return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
             }
 
-            
-            // 檢查userId
-            var activeMembers = _memberService.GetAllMembers().Where(m=>m.IsActive==true).ToList();
-            var activeUserIdList = activeMembers.Select(m => m.UserId).ToList();
-            var readerUids = new List<string>();
+
+            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(createHandoverDetailRequest.ReaderUserIds);
+
+            if (readerMemberList.Find(m => m.UserId == creatorMember.UserId) == null)
+            {
+                readerMemberList.Add(creatorMember);
+            }
 
 
             if (createHandoverDetailRequest.categoryArray.Any())
             {
-                List<string> invalidUids = new();
-                foreach (var category in createHandoverDetailRequest.categoryArray)
-                {
-                    if (category.ItemArray.Any())
-                    {
-                        foreach (var categoryItemValues in category.ItemArray)
-                        {
-                            if (categoryItemValues.ItemOption.Any())
-                            {
-                                foreach (var itemOptionAndValues in categoryItemValues.ItemOption)
-                                {
-                                    if (itemOptionAndValues.Values != null)
-                                    {
-                                        var userIds = itemOptionAndValues.Values.RemarkAssignUserIDValue;
-                                        if (userIds != null && userIds.Any())
-                                        {
-                                            invalidUids.AddRange(userIds.Except(activeUserIdList));
-                                            readerUids.AddRange(userIds);
-                                        }
-
-                                    }
-                                }
-
-                            }
-                            //if (categoryItemValues.Values != null&& categoryItemValues.Values.RemarkAssignUserIDValue!=null && categoryItemValues.Values.RemarkAssignUserIDValue.Count>0)
-                            //{
-                            //    var userIds = categoryItemValues.Values.RemarkAssignUserIDValue;
-                            //    invalidUids.AddRange(userIds.Except(activeUserIdList));
-                            //    readerUids.AddRange(userIds);
-                            //}
-
-                        }
-                    }
-                    if (invalidUids.Any())
-                    {
-                        return BadRequest(new CommonResponse<dynamic>
-                        {
-                            Result = false,
-                            Message = $"{string.Join(",", invalidUids)}為無效 userId"
-                        });
-                    }
-                }
-
 
                 // 驗證是否同屬一個main
                 var categoryIdList = createHandoverDetailRequest.categoryArray.Select(c => c.CategoryId).ToList();
@@ -230,12 +189,6 @@ namespace handover_api.Controllers
                     });
                 }
 
-                List<Member> readerMemberList = _memberService.GetMembersByUserIdList(readerUids);
-
-                if (readerMemberList.Find(m => m.UserId == creatorMember.UserId) == null)
-                {
-                    readerMemberList.Add(creatorMember);
-                }
 
                 var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], matchedSheetGroupIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
 
