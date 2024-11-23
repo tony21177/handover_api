@@ -363,7 +363,7 @@ namespace handover_api.Controllers
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
             var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
             endDate = endDate?.AddDays(1);
-            List<HandoverDetail> handoverDetailList = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
+            var (handoverDetailList,totalPages) = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
             List<HandoverDetailWithReadV2Dto> handoverDetailWithReadDtoList = _mapper.Map<List<HandoverDetailWithReadV2Dto>>(handoverDetailList);
@@ -405,12 +405,11 @@ namespace handover_api.Controllers
 
 
 
-
-
             return Ok(new CommonResponse<List<HandoverDetailWithReadV2Dto>>
             {
                 Result = true,
-                Data = handoverDetailWithReadDtoList
+                Data = handoverDetailWithReadDtoList,
+                TotalPages = totalPages 
             });
         }
 

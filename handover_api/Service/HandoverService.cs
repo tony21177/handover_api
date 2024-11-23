@@ -6,6 +6,7 @@ using handover_api.Service.ValueObject;
 using MaiBackend.PublicApi.Consts;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System.Text.Json;
 using System.Transactions;
 
@@ -866,7 +867,7 @@ namespace handover_api.Service
             }
         }
 
-        public List<HandoverDetail> SearchHandoverDetails(int? mainSheetId, DateTime? startDate, DateTime? endDate, PaginationCondition pageCondition, string? searchString)
+        public (List<HandoverDetail>,int) SearchHandoverDetails(int? mainSheetId, DateTime? startDate, DateTime? endDate, PaginationCondition pageCondition, string? searchString)
         {
             IQueryable<HandoverDetail> query = _dbContext.HandoverDetails;
 
@@ -918,11 +919,12 @@ namespace handover_api.Service
                     _ => query.OrderBy(h => h.CreatedTime),
                 };
             }
-
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageCondition.PageSize);
             // 分页
             query = query.Skip((pageCondition.Page - 1) * pageCondition.PageSize).Take(pageCondition.PageSize);
 
-            return query.ToList();
+            return (query.ToList(),totalPages);
         }
 
         public List<HandoverDetailReader> GetHandoverDetailReadersByDetailId(string handoverDetailId)
