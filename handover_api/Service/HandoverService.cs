@@ -678,15 +678,18 @@ namespace handover_api.Service
 
             categoryArray.ForEach(category =>
             {
-                var matchedCategory = categorySettings.Find(c => c.CategoryId == category.CategoryId);
-                if (matchedCategory != null)
+                var matchedCategorySetting = categorySettings.Find(c => c.CategoryId == category.CategoryId);
+                var matchedGroupSetting = groupSettings.Find(c => c.SheetGroupId == matchedCategorySetting.SheetGroupId);
+                if (matchedCategorySetting != null)
                 {
-                    category.MainSheetId = matchedCategory.MainSheetId;
-                    category.SheetGroupId = matchedCategory.SheetGroupId;
-                    category.WeekDays = matchedCategory.WeekDays;
-                    category.CategoryName = matchedCategory.CategoryName;   
-                    category.CreatedTime = matchedCategory.CreatedTime;
-                    category.updatedTime = matchedCategory.UpdatedTime;
+                    category.MainSheetId = matchedCategorySetting.MainSheetId;
+                    category.SheetGroupId = matchedCategorySetting.SheetGroupId;
+                    category.WeekDays = matchedCategorySetting.WeekDays;
+                    category.CategoryName = matchedCategorySetting.CategoryName;   
+                    category.CreatedTime = matchedCategorySetting.CreatedTime;
+                    category.updatedTime = matchedCategorySetting.UpdatedTime;
+                    category.GroupTitle = matchedGroupSetting?.GroupTitle;
+                    category.GroupRank = matchedGroupSetting?.GroupRank;
                 }
             });
 

@@ -9,6 +9,9 @@ namespace handover_api.Service.ValueObject
         public string? WeekDays { get; set; }
         public int? MainSheetId { get; set; }
         public int? SheetGroupId { get; set; }
+        public string? GroupTitle { get; set; }
+        public int? GroupRank { get; set; }
+
         public string? CategoryName { get; set; }
         public DateTime? CreatedTime { get; set; }    
         public DateTime? updatedTime { get; set; }    
