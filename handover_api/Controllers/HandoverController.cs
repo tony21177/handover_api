@@ -161,14 +161,14 @@ namespace handover_api.Controllers
                         Message = "不可跨交班main setting"
                     });
                 }
-                if (!isTheSameGroupId)
-                {
-                    return BadRequest(new CommonResponse<dynamic>
-                    {
-                        Result = false,
-                        Message = "不可跨交班group setting"
-                    });
-                }
+                //if (!isTheSameGroupId)
+                //{
+                //    return BadRequest(new CommonResponse<dynamic>
+                //    {
+                //        Result = false,
+                //        Message = "不可跨交班group setting"
+                //    });
+                //}
                 if (matchedSheetMainSettings[0].IsActive == null || matchedSheetMainSettings[0].IsActive == false)
                 {
                     return BadRequest(new CommonResponse<dynamic>
