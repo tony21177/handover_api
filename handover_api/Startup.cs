@@ -129,6 +129,8 @@ builder.Services.ConfigureBusinessServices(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 app.UseHttpsRedirection();
 
 app.UseRouting();
