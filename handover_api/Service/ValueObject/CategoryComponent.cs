@@ -49,7 +49,7 @@ namespace handover_api.Service.ValueObject
             public string? CommentValue { get; set; }
             public List<string>? TableValue { get; set; } = new List<string>();
             public List<string>? RemarkAssignUserNameValue { get; set; } = new List<string>();
-
+            public List<string>? RemarkContentValue { get; set; } = new List<string>();
             public List<string>? RemarkAssignUserIDValue { get; set; } = new List<string>();
         }
     }
