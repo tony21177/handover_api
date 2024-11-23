@@ -899,7 +899,7 @@ namespace handover_api.Service
                 query = pageCondition.OrderByField switch
                 {
                     "mainSheetId" => query.OrderBy(h => h.MainSheetId),
-                    "nandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
+                    "hnandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
                     "creatorName" => query.OrderBy(h => h.CreatorName),
                     "creatorId" => query.OrderBy(h => h.CreatorId),
                     "updatedTime" => query.OrderBy(h => h.UpdatedTime),
@@ -911,7 +911,7 @@ namespace handover_api.Service
                 query = pageCondition.OrderByField switch
                 {
                     "mainSheetId" => query.OrderBy(h => h.MainSheetId),
-                    "nandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
+                    "hnandoverDetailId" => query.OrderBy(h => h.HandoverDetailId),
                     "creatorName" => query.OrderBy(h => h.CreatorName),
                     "creatorId" => query.OrderBy(h => h.CreatorId),
                     "updatedTime" => query.OrderBy(h => h.UpdatedTime),
