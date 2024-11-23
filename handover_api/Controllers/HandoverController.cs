@@ -480,7 +480,7 @@ namespace handover_api.Controllers
 
             handoverDetailWithReaders.HandoverDetailReader = handoverReaderDtoList;
             handoverDetailWithReaders.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetailWithReaders.JsonContent);
-            handoverDetailWithReaders.CategoryArray = handoverDetailWithReaders.CategoryArray.OrderBy(category=>category.GroupRank).ToList();
+            handoverDetailWithReaders.CategoryArray = handoverDetailWithReaders.CategoryArray.OrderByDescending(category=>category.GroupRank).ToList();
 
 
             return Ok(new CommonResponse<HandoverDetailWithReadersV2>
