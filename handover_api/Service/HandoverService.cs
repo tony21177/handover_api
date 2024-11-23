@@ -537,6 +537,18 @@ namespace handover_api.Service
             return;
         }
 
+        public HandoverSheetMain? GetHandoverMainSetting(int sheetMainId)
+        {
+            
+            return _dbContext.HandoverSheetMains.Where(s=>s.SheetId==sheetMainId).FirstOrDefault();
+        }
+
+        public List<HandoverSheetGroup> GetHandoverGroupSettingByGroupIds(List<int> sheetGroupIds)
+        {
+
+            return _dbContext.HandoverSheetGroups.Where(g => sheetGroupIds.Contains(g.SheetGroupId)).ToList();
+        }
+
         public List<SheetSetting> GetAllSettings()
         {
             List<HandoverSheetMain> handoverSheetMainList = GetAllHandoverSheetMain();
@@ -664,13 +676,13 @@ namespace handover_api.Service
         }
 
 
-        public string? CreateHandOverDetailV2(int mainSheetId,int sheetGroupId, List<CategoryComponent> categoryArray, String? title, String? content, List<Member> readerMemberList, Member creator, List<string> fileAttIdList)
+        public string? CreateHandOverDetailV2(int mainSheetId, List<CategoryComponent> categoryArray, String? title, String? content, List<Member> readerMemberList, Member creator, List<string> fileAttIdList)
         {
             if (categoryArray.Count == 0) { return null; }
 
             var mainSheetSetting = GetSheetMainByMainSheetId(mainSheetId);
             List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(mainSheetId).Where(group => group.IsActive == true).ToList();
-            List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
+            //List<int> inSheetGroupIdList = handoverSheetGroups.Select(group => group.SheetGroupId).ToList();
             
             List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
 
@@ -703,7 +715,6 @@ namespace handover_api.Service
                 Title = title,
                 HandoverDetailId = Guid.NewGuid().ToString(),
                 MainSheetId = mainSheetId,
-                SheetGroupId = sheetGroupId,
                 JsonContent = jsonContent,
                 CreatorId = creator.UserId,
                 CreatorName = creator.DisplayName,

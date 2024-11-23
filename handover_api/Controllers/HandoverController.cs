@@ -171,8 +171,7 @@ namespace handover_api.Controllers
                 }
 
 
-
-                var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], matchedSheetGroupIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
+                var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
 
                 return Ok(new CommonResponse<string?>
                 {
@@ -443,12 +442,13 @@ namespace handover_api.Controllers
 
         [HttpGet("v2/detail/{handoverDetailId}")]
         [Authorize]
-        public IActionResult ReadHandoverDetailV2(string handoverDetailId)
+        public IActionResult GetHandoverDetailV2(string handoverDetailId)
         {
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
             Member reader = memberAndPermissionSetting.Member;
             var handoverDetail = _handoverService.GetHandoverDetailByDetailId(handoverDetailId);
+            List<int> groupSettingIds = new();
             if (handoverDetail == null)
             {
                 return BadRequest(new CommonResponse<HandoverDetail>
@@ -457,13 +457,13 @@ namespace handover_api.Controllers
                     Message = "此交班表不存在",
                 });
             }
-            HandoverDetailWithReadersV2 handoverDetailWithReaders = _mapper.Map<HandoverDetailWithReadersV2>(handoverDetail);
+            SheetSettingAndDetail sheetSettingAndDetail = _mapper.Map<SheetSettingAndDetail>(handoverDetail);
 
             if (!string.IsNullOrEmpty(handoverDetail.FileAttIds))
             {
                 List<string> fileAttIds = handoverDetail.FileAttIds.Split(",").ToList();
                 List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
-                handoverDetailWithReaders.Files = fileDetailInfos;
+                sheetSettingAndDetail.Files = fileDetailInfos;
             }
 
             //var result = _handoverService.ReadHandoverDetail(handoverDetailId, reader.UserId);
@@ -478,15 +478,30 @@ namespace handover_api.Controllers
 
             });
 
-            handoverDetailWithReaders.HandoverDetailReader = handoverReaderDtoList;
-            handoverDetailWithReaders.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetailWithReaders.JsonContent);
-            handoverDetailWithReaders.CategoryArray = handoverDetailWithReaders.CategoryArray.OrderByDescending(category=>category.GroupRank).ToList();
+            sheetSettingAndDetail.HandoverDetailReader = handoverReaderDtoList;
+            var categoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetail.JsonContent).OrderByDescending(c=>c.GroupRank).ToList();
+            var distinctGroupIdList = categoryArray.Select(c=>c.SheetGroupId).Distinct().ToList();
+
+            distinctGroupIdList.ForEach(groupId =>
+            {
+                var groupWithCategoryArrayDto = new GroupWithCategoryArrayDto()
+                {
+                    SheetGroupId = groupId.Value
+                };
+                var matchedCategoryArray = categoryArray.Where(c => c.SheetGroupId == groupId).ToList();
+                groupWithCategoryArrayDto.GroupTitle = matchedCategoryArray[0].GroupTitle;
+                groupWithCategoryArrayDto.GroupRank = matchedCategoryArray[0].GroupRank.Value;
+                groupWithCategoryArrayDto.CategoryArray = matchedCategoryArray;
+                sheetSettingAndDetail.HandoverSheetGroupList.Add(groupWithCategoryArrayDto);
+            });
+
+            sheetSettingAndDetail.HandoverSheetGroupList = sheetSettingAndDetail.HandoverSheetGroupList.OrderByDescending(g=>g.GroupRank).ToList(); 
 
 
-            return Ok(new CommonResponse<HandoverDetailWithReadersV2>
+            return Ok(new CommonResponse<SheetSettingAndDetail>
             {
                 Result = true,
-                Data = handoverDetailWithReaders
+                Data = sheetSettingAndDetail
             });
         }
 
