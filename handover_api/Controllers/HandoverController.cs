@@ -178,16 +178,16 @@ namespace handover_api.Controllers
                     });
                 }
 
-                var neededSheetCategorySettingList = _handoverService.GetCategorySettingsByMainSheetIdAndGroupId(matchedSheetMainIdList[0], matchedSheetGroupIdList[0]);
-                var neededSheetCategoryCount = neededSheetCategorySettingList.Count;
-                if (neededSheetCategoryCount != createHandoverDetailRequest.categoryArray.Count)
-                {
-                    return BadRequest(new CommonResponse<dynamic>
-                    {
-                        Result = false,
-                        Message = $"交班單的Category筆數:{createHandoverDetailRequest.categoryArray.Count}不對,需要{neededSheetCategoryCount}筆"
-                    });
-                }
+                //var neededSheetCategorySettingList = _handoverService.GetCategorySettingsByMainSheetIdAndGroupId(matchedSheetMainIdList[0], matchedSheetGroupIdList[0]);
+                //var neededSheetCategoryCount = neededSheetCategorySettingList.Count;
+                //if (neededSheetCategoryCount != createHandoverDetailRequest.categoryArray.Count)
+                //{
+                //    return BadRequest(new CommonResponse<dynamic>
+                //    {
+                //        Result = false,
+                //        Message = $"交班單的Category筆數:{createHandoverDetailRequest.categoryArray.Count}不對,需要{neededSheetCategoryCount}筆"
+                //    });
+                //}
 
 
                 var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], matchedSheetGroupIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
