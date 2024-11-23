@@ -14,14 +14,10 @@ namespace handover_api.Controllers.Validator
         {
 
             _memberService = memberService;
-            if (action == ActionTypeEnum.Create)
-            {
-                RuleFor(x => x.Title).NotEmpty().WithMessage("title為必須");
-            }
+            
             _memberService = memberService;
             if (action == ActionTypeEnum.Create)
             {
-                RuleFor(x => x.RowDetails).NotEmpty().WithMessage("rowDetails為必須");
                 RuleFor(x => x.Title).NotEmpty().WithMessage("title為必須");
             }
 

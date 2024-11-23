@@ -504,7 +504,7 @@ namespace handover_api.Controllers
 
             return Ok(new CommonResponse<HandoverDetailWithReadersV2>
             {
-                Result = result,
+                Result = true,
                 Data = handoverDetailWithReaders
             });
         }
