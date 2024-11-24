@@ -13,6 +13,7 @@ using MaiBackend.PublicApi.Consts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using stock_api.Common.Utils;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using static handover_api.Service.ValueObject.CategoryComponent;
@@ -332,13 +333,13 @@ namespace handover_api.Controllers
             var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
             Member loginMember = memberAndPermissionSetting.Member;
 
-            if ((searchHandoverDetailRequest.StartDate != null && !Regex.IsMatch(searchHandoverDetailRequest.StartDate, @"^\d{3}/\d{2}/\d{2}$"))
-                || (searchHandoverDetailRequest.EndDate != null && !Regex.IsMatch(searchHandoverDetailRequest.EndDate, @"^\d{3}/\d{2}/\d{2}$")))
+            if ((searchHandoverDetailRequest.StartDate != null && DateTimeHelper.ParseDateString(searchHandoverDetailRequest.StartDate)==null)
+                || (searchHandoverDetailRequest.EndDate != null && DateTimeHelper.ParseDateString(searchHandoverDetailRequest.EndDate) == null))
             {
                 return BadRequest(new CommonResponse<dynamic>
                 {
                     Result = false,
-                    Message = "時間格式必需為yyy/mm/dd",
+                    Message = "時間格式必需為yyyy/MM/dd",
                 });
             }
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
@@ -384,6 +385,14 @@ namespace handover_api.Controllers
                 dto.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.JsonContent);
             });
 
+            var mainSheetIds = handoverDetailWithReadDtoList.Select(d=>d.MainSheetId).Distinct().ToList();
+            var mainSheets = _handoverService.GetHandoverMainSettings(mainSheetIds);
+
+            handoverDetailWithReadDtoList.ForEach(e =>
+            {
+                var matchedMain = mainSheets.Where(m => m.SheetId == e.MainSheetId).FirstOrDefault();
+                e.MainSheetTitle = matchedMain.Title;
+            });
 
 
             return Ok(new CommonResponse<List<HandoverDetailWithReadV2Dto>>

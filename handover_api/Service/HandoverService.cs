@@ -543,6 +543,12 @@ namespace handover_api.Service
             return _dbContext.HandoverSheetMains.Where(s=>s.SheetId==sheetMainId).FirstOrDefault();
         }
 
+        public List<HandoverSheetMain> GetHandoverMainSettings(List<int> sheetMainIdList)
+        {
+
+            return _dbContext.HandoverSheetMains.Where(s => sheetMainIdList.Contains(s.SheetId)).ToList();
+        }
+
         public List<HandoverSheetGroup> GetHandoverGroupSettingByGroupIds(List<int> sheetGroupIds)
         {
 
@@ -898,9 +904,9 @@ namespace handover_api.Service
             {
                 query = query.Where(h => h.MainSheetId == mainSheetId);
             }
+
             if (!string.IsNullOrEmpty(searchString))
             {
-
                 // 根据 Content 或 Title 进行模糊匹配
                 query = query.Where(h => h.Content.ToLower().Contains(searchString.ToLower())
                 || h.Title.ToLower().Contains(searchString.ToLower())

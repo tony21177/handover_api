@@ -10,6 +10,7 @@ namespace handover_api.Controllers.Dto
         public string Title { get; set; }
         public string Content { get; set; }
         public int MainSheetId { get; set; }
+        public string MainSheetTitle { get; set; } = null!;
         public int SheetGroupId { get; set; }
         [JsonIgnore]
         public string? JsonContent { get; set; }
