@@ -279,7 +279,7 @@ namespace handover_api.Controllers
             var startDate = searchHandoverDetailRequest.StartDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.StartDate) : null;
             var endDate = searchHandoverDetailRequest.EndDate != null ? APIMappingProfile.ParseDateString(searchHandoverDetailRequest.EndDate) : null;
             endDate = endDate?.AddDays(1);
-            var (handoverDetailList,totalPages) = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, startDate, endDate,
+            var (handoverDetailList,totalPages) = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, searchHandoverDetailRequest.StartDate, searchHandoverDetailRequest.EndDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
             List<HandoverDetailWithReadDto> handoverDetailWithReadDtoList = _mapper.Map<List<HandoverDetailWithReadDto>>(handoverDetailList);
@@ -343,7 +343,6 @@ namespace handover_api.Controllers
                 });
             }
             
-            endDate = endDate?.AddDays(1);
             var (handoverDetailList,totalPages) = _handoverService.SearchHandoverDetails(searchHandoverDetailRequest.MainSheetId, searchHandoverDetailRequest.StartDate, searchHandoverDetailRequest.EndDate,
                 searchHandoverDetailRequest.PaginationCondition, searchHandoverDetailRequest.SearchString);
 
