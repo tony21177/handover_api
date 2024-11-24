@@ -7,6 +7,7 @@ using MaiBackend.PublicApi.Consts;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Ocsp;
+using stock_api.Common.Utils;
 using System.Text.Json;
 using System.Transactions;
 
@@ -887,18 +888,20 @@ namespace handover_api.Service
             }
         }
 
-        public (List<HandoverDetail>,int) SearchHandoverDetails(int? mainSheetId, DateTime? startDate, DateTime? endDate, PaginationCondition pageCondition, string? searchString)
+        public (List<HandoverDetail>,int) SearchHandoverDetails(int? mainSheetId, string? startDate, string? endDate, PaginationCondition pageCondition, string? searchString)
         {
             IQueryable<HandoverDetail> query = _dbContext.HandoverDetails;
 
             // 根据提供的条件进行过滤
             if (startDate != null)
             {
-                query = query.Where(h => h.UpdatedTime >= startDate);
+                var startDateTime = DateTimeHelper.ParseDateString(startDate);
+                query = query.Where(h => h.UpdatedTime >= startDateTime);
             }
             if (endDate != null)
             {
-                query = query.Where(h => h.UpdatedTime <= endDate);
+                var endDateTime = DateTimeHelper.ParseDateString(endDate).Value.AddDays(1);
+                query = query.Where(h => h.UpdatedTime < endDateTime);
             }
             if (mainSheetId != null)
             {
