@@ -602,5 +602,31 @@ namespace handover_api.Controllers
             var fileStream = _fileUploadService.Download(fileDetail);
             return fileStream;
         }
+
+        [HttpPost("read")]
+        [Authorize]
+        public IActionResult ReadDetail(ReadDetailRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member loginMember = memberAndPermissionSetting.Member;
+
+            var detail = _handoverService.GetHandoverDetailByDetailId(request.HandoverDetailId);
+            if (detail == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該交班表不存在"
+                });
+            }
+
+            _handoverService.ReadDetail(request.HandoverDetailId, loginMember.UserId);
+
+            return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
+            {
+                Result = true,
+            });
+        }
     }
 }

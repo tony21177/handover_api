@@ -1164,5 +1164,13 @@ namespace handover_api.Service
             });
             return sheetSettingDtoList;
         }
+
+
+        public void ReadDetail(string handoverDetailId,string userId )
+        {
+            _dbContext.HandoverDetailReaders
+        .Where(r => r.UserId == userId && r.HandoverDetailId == handoverDetailId)
+        .ExecuteUpdate(update => update.SetProperty(r => r.IsRead, true));
+        }
     }
 }
