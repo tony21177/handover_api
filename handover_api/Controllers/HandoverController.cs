@@ -33,6 +33,7 @@ namespace handover_api.Controllers
         private readonly CreateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
         private readonly CreateHandoverDetailRequestV2Validator _createHandoverDetailRequestV2Validator;
         private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
+        private readonly AddDetailHandlersValidator _addDetailHandlersValidator;
 
         public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService, FileUploadService fileUploadService)
         {
@@ -44,6 +45,7 @@ namespace handover_api.Controllers
             _createHandoverDetailRequestValidator = new CreateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
             _createHandoverDetailRequestV2Validator = new CreateHandoverDetailRequestV2Validator(ActionTypeEnum.Create, _memberService);
             _updateHandoverDetailRequestValidator = new UpdateHandoverDetailRequestValidator(_memberService);
+            _addDetailHandlersValidator = new AddDetailHandlersValidator(_memberService);
             _fileUploadService = fileUploadService;
         }
 
@@ -622,6 +624,39 @@ namespace handover_api.Controllers
             }
 
             _handoverService.ReadDetail(request.HandoverDetailId, loginMember.UserId);
+
+            return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
+            {
+                Result = true,
+            });
+        }
+
+        [HttpPost("addDetailHandlers")]
+        [Authorize]
+        public IActionResult AddDetailHandlers(AddDetailHandlersRequest request)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member loginMember = memberAndPermissionSetting.Member;
+
+            var validationResult = _addDetailHandlersValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var detail = _handoverService.GetHandoverDetailByDetailId(request.handoverDetailId);
+            if (detail == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "該交班表不存在"
+                });
+            }
+
+            _handoverService.AddDetailHandlers(request.UserList, request.handoverDetailId);
 
             return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
             {

@@ -1172,6 +1172,34 @@ namespace handover_api.Service
         .Where(r => r.UserId == userId && r.HandoverDetailId == handoverDetailId)
         .ExecuteUpdate(update => update.SetProperty(r => r.IsRead, true).SetProperty(r => r.ReadTime, DateTime.Now));
         }
-        
+
+
+        public void AddDetailHandlers(List<UserRequest> userRequests,string handoverDetailId)
+        {
+            var userIds = userRequests.Select(u => u.UserId).ToList();
+            var users = _dbContext.Members.Where(m => userIds.Contains(m.UserId)).ToList();
+
+            var newHandlers = new List<HandoverDetailHandler>();
+
+            userRequests.ForEach(request =>
+            {
+                var matchedUser = users.Where(u => u.UserId == request.UserId).FirstOrDefault();
+
+                var newHandler = new HandoverDetailHandler()
+                {
+                    UserId = matchedUser.UserId,
+                    UserName = matchedUser.DisplayName,
+                    HandoverDetailId = handoverDetailId,
+                    Remarks = request.Remarks,
+                    SubmitTime = DateTime.Now,
+                    Type = request.Type,
+                };
+                newHandlers.Add(newHandler);
+
+            });
+            _dbContext.HandoverDetailHandlers.AddRange(newHandlers);
+            _dbContext.SaveChanges();
+            return;
+        }
     }
 }

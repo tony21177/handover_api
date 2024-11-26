@@ -48,6 +48,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "handover_detail_handlers",
+         "ObjectType": 0
+      },
+      {
          "Name": "handover_detail_history",
          "ObjectType": 0
       },

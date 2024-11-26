@@ -29,6 +29,8 @@ public partial class HandoverContext : DbContext
 
     public virtual DbSet<HandoverDetail> HandoverDetails { get; set; }
 
+    public virtual DbSet<HandoverDetailHandler> HandoverDetailHandlers { get; set; }
+
     public virtual DbSet<HandoverDetailHistory> HandoverDetailHistories { get; set; }
 
     public virtual DbSet<HandoverDetailReader> HandoverDetailReaders { get; set; }
@@ -140,6 +142,13 @@ public partial class HandoverContext : DbContext
             entity.Property(e => e.UpdatedTime)
                 .ValueGeneratedOnAddOrUpdate()
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverDetailHandler>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.Property(e => e.Type).HasComment("HANDOVER(交班者),TAKEOVER(接班者)");
         });
 
         modelBuilder.Entity<HandoverDetailHistory>(entity =>
