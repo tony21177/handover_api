@@ -1166,11 +1166,12 @@ namespace handover_api.Service
         }
 
 
-        public void ReadDetail(string handoverDetailId,string userId )
+        public void ReadDetail(string handoverDetailId, string userId)
         {
             _dbContext.HandoverDetailReaders
         .Where(r => r.UserId == userId && r.HandoverDetailId == handoverDetailId)
-        .ExecuteUpdate(update => update.SetProperty(r => r.IsRead, true));
+        .ExecuteUpdate(update => update.SetProperty(r => r.IsRead, true).SetProperty(r => r.ReadTime, DateTime.Now));
         }
+        
     }
 }
