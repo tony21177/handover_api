@@ -504,7 +504,9 @@ namespace handover_api.Controllers
                 sheetSettingAndDetail.HandoverSheetGroupList.Add(groupWithCategoryArrayDto);
             });
 
-            sheetSettingAndDetail.HandoverSheetGroupList = sheetSettingAndDetail.HandoverSheetGroupList.OrderByDescending(g=>g.GroupRank).ToList(); 
+            sheetSettingAndDetail.HandoverSheetGroupList = sheetSettingAndDetail.HandoverSheetGroupList.OrderByDescending(g=>g.GroupRank).ToList();
+            var handoverDetailHandlers = _handoverService.GetHandoverDetailHandlersById(handoverDetailId);
+            sheetSettingAndDetail.HandoverDetailHandlers = handoverDetailHandlers;
 
 
             return Ok(new CommonResponse<SheetSettingAndDetail>
@@ -655,6 +657,7 @@ namespace handover_api.Controllers
                     Message = "該交班表不存在"
                 });
             }
+
 
             _handoverService.AddDetailHandlers(request.UserList, request.handoverDetailId);
 

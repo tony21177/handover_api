@@ -31,6 +31,7 @@ namespace handover_api.Service.ValueObject
 
         public List<FileDetailInfo> Files { get; set; } = new List<FileDetailInfo>();
         public List<HandoverDetailReaderDto> HandoverDetailReader { get; set; } = new();
+        public List<HandoverDetailHandler> HandoverDetailHandlers { get; set; } = new();
     }
 
     public class GroupWithCategoryArrayDto
