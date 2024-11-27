@@ -888,6 +888,137 @@ namespace handover_api.Service
             }
         }
 
+        public string? UpdateHandoverV2(HandoverDetail handoverDetail,List<CategoryComponent>? categoryArray, String? title, String? content, List<Member>? readerMemberList, List<string> fileAttidList)
+        {
+            string oldJsonContent = handoverDetail.JsonContent;
+            string oldFileAttIds = handoverDetail.FileAttIds;
+            if (oldJsonContent == null)
+            {
+                _logger.LogError("資料庫有誤,jsonContent為null");
+            }
+            string? newJsonContent;
+            try
+            {
+
+
+                // new json 
+                var mainSheetSetting = GetSheetMainByMainSheetId(handoverDetail.MainSheetId);
+                List<HandoverSheetGroup> handoverSheetGroups = GetSheetGroupByMainSheetId(handoverDetail.MainSheetId).Where(group => group.IsActive == true).ToList();
+
+                List<GroupSetting> groupSettings = _mapper.Map<List<GroupSetting>>(handoverSheetGroups);
+
+                var categorySettings = _dbContext.HandoverSheetCategorySettings.ToList();
+
+                if (categoryArray != null)
+                {
+                    categoryArray.ForEach(category =>
+                    {
+                        var matchedCategorySetting = categorySettings.Find(c => c.CategoryId == category.CategoryId);
+                        var matchedGroupSetting = groupSettings.Find(c => c.SheetGroupId == matchedCategorySetting.SheetGroupId);
+                        if (matchedCategorySetting != null)
+                        {
+                            category.MainSheetId = matchedCategorySetting.MainSheetId;
+                            category.SheetGroupId = matchedCategorySetting.SheetGroupId;
+                            category.WeekDays = matchedCategorySetting.WeekDays;
+                            category.CategoryName = matchedCategorySetting.CategoryName;
+                            category.CreatedTime = matchedCategorySetting.CreatedTime;
+                            category.updatedTime = matchedCategorySetting.UpdatedTime;
+                            category.GroupTitle = matchedGroupSetting?.GroupTitle;
+                            category.GroupRank = matchedGroupSetting?.GroupRank;
+                        }
+                    });
+                    string jsonContent = System.Text.Json.JsonSerializer.Serialize(categoryArray);
+                    newJsonContent = jsonContent;
+                }
+                else
+                {
+                    newJsonContent = oldJsonContent;
+                }
+
+                
+                
+
+                List<HandoverDetailReader> handoverDetailReaders = GetHandoverDetailReadersByDetailId(handoverDetail.HandoverDetailId);
+                List<string> originalReaderUserIdList = handoverDetailReaders.Select(r => r.UserId).ToList();
+                List<string> originalReaderUserNames = handoverDetailReaders.Select(r => r.UserName).ToList();
+                List<string> newReaderUserIdList = originalReaderUserIdList;
+                List<string> newReaderUserNameList = originalReaderUserNames;
+                if (readerMemberList != null)
+                {
+                    newReaderUserIdList = readerMemberList.Select(r => r.UserId).ToList();
+                    newReaderUserNameList = readerMemberList.Select(r => r.DisplayName).ToList();
+                }
+
+                var oldTitle = handoverDetail.Title;
+                var oldContent = handoverDetail.Content;
+                var newTitle = title ?? oldTitle;
+                var newContent = content ?? oldContent;
+
+
+                using var transaction = _dbContext.Database.BeginTransaction();
+
+                try
+                {
+                    if (title != null)
+                    {
+                        handoverDetail.Title = title;
+                    }
+                    if (content != null)
+                    {
+                        handoverDetail.Content = content;
+                    }
+                    handoverDetail.JsonContent = newJsonContent;
+                    handoverDetail.FileAttIds = string.Join(",", fileAttidList);
+
+                    List<string> toBeDeleteReaderUserIdList = originalReaderUserIdList.Except(newReaderUserIdList).ToList();
+                    List<string> toBeAddReaderUserIdList = newReaderUserIdList.Except(originalReaderUserIdList).ToList();
+
+                    List<HandoverDetailReader> toBeAddHandoverDetailReaderList = new();
+                    toBeAddReaderUserIdList.ForEach(userId =>
+                    {
+                        Member newAddReaderMember = readerMemberList.Find(m => m.UserId == userId);
+
+                        HandoverDetailReader handoverDetailReader = new HandoverDetailReader
+                        {
+                            HandoverDetailId = handoverDetail.HandoverDetailId,
+                            UserId = userId,
+                            UserName = newAddReaderMember.DisplayName,
+                            IsRead = false,
+                        };
+                        toBeAddHandoverDetailReaderList.Add(handoverDetailReader);
+                    });
+                    _dbContext.HandoverDetailReaders.AddRange(toBeAddHandoverDetailReaderList);
+                    DeleteHandoverDetailReader(handoverDetail.HandoverDetailId, toBeDeleteReaderUserIdList);
+
+                    AddHandoverDetailHistory(handoverDetail, oldTitle, newTitle, oldContent, newContent,
+                        originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent,
+                        oldFileAttIds, string.Join(",", handoverDetail.FileAttIds)
+                        , Enum.GetName(ActionTypeEnum.Update));
+
+                    // Save changes to the database
+                    _dbContext.SaveChanges();
+
+                    // If all deletions were successful, commit the transaction
+                    transaction.Commit();
+                    return newJsonContent;
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions and log if necessary
+                    Console.WriteLine($"Error update handover: {ex.Message}");
+
+                    // Rollback the transaction in case of an exception
+                    transaction.Rollback();
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("parse json content有誤,ex:{message}", ex.Message);
+                return null;
+            }
+        }
+
         public (List<HandoverDetail>,int) SearchHandoverDetails(int? mainSheetId, string? startDate, string? endDate, PaginationCondition pageCondition, string? searchString)
         {
             IQueryable<HandoverDetail> query = _dbContext.HandoverDetails;
@@ -1209,6 +1340,11 @@ namespace handover_api.Service
         public List<HandoverDetailHandler> GetHandoverDetailHandlersById(string handoverDetailId)
         {
             return _dbContext.HandoverDetailHandlers.Where(h => h.HandoverDetailId == handoverDetailId).ToList();
+        }
+
+        public List<HandoverDetailHandler> GetHandoverDetailHandlersByIds(List<string> handoverDetailIdList)
+        {
+            return _dbContext.HandoverDetailHandlers.Where(h => handoverDetailIdList.Contains(h.HandoverDetailId)).ToList();
         }
     }
 }

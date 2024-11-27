@@ -25,5 +25,6 @@ namespace handover_api.Controllers.Dto
         public bool? IsActive { get; set; }
         public List<FileDetailInfo> Files { get; set; } = new List<FileDetailInfo>();
         public List<HandoverDetailReaderDto> HandoverDetailReader { get; set; } = new();
+        public List<HandoverDetailHandler> HandoverDetailHandlers { get; set; } = new();    
     }
 }

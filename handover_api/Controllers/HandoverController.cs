@@ -33,6 +33,7 @@ namespace handover_api.Controllers
         private readonly CreateHandoverDetailRequestValidator _createHandoverDetailRequestValidator;
         private readonly CreateHandoverDetailRequestV2Validator _createHandoverDetailRequestV2Validator;
         private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
+        private readonly UpdateHandoverDetailRequestValidatorV2 _updateHandoverDetailRequestValidatorV2;
         private readonly AddDetailHandlersValidator _addDetailHandlersValidator;
 
         public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService, FileUploadService fileUploadService)
@@ -45,6 +46,8 @@ namespace handover_api.Controllers
             _createHandoverDetailRequestValidator = new CreateHandoverDetailRequestValidator(ActionTypeEnum.Create, _memberService);
             _createHandoverDetailRequestV2Validator = new CreateHandoverDetailRequestV2Validator(ActionTypeEnum.Create, _memberService);
             _updateHandoverDetailRequestValidator = new UpdateHandoverDetailRequestValidator(_memberService);
+            _updateHandoverDetailRequestValidatorV2 = new UpdateHandoverDetailRequestValidatorV2(_memberService);
+
             _addDetailHandlersValidator = new AddDetailHandlersValidator(_memberService);
             _fileUploadService = fileUploadService;
         }
@@ -229,6 +232,47 @@ namespace handover_api.Controllers
                 Data = updatedJsonContent,
             });
         }
+
+        [HttpPost("v2/update")]
+        [Authorize]
+        public IActionResult UpdateHandoverV2(UpdateHandoverDetailRequestV2 updateHandoverDetailRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            Member creatorMember = memberAndPermissionSetting.Member;
+            if (permissionSetting == null || !permissionSetting.IsUpdateHandover)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+
+            // 參數驗證
+            var validationResult = _updateHandoverDetailRequestValidatorV2.Validate(updateHandoverDetailRequest);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+            var handoverDetail = _handoverService.GetHandoverDetail(updateHandoverDetailRequest.HandoverDetailId);
+            if (handoverDetail == null)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "此交班表不存在",
+                });
+            }
+
+            List<Member> readerMemberList = _memberService.GetMembersByUserIdList(updateHandoverDetailRequest.ReaderUserIds);
+
+            var updatedJsonContent = _handoverService.UpdateHandoverV2(handoverDetail, updateHandoverDetailRequest.CategoryArray, updateHandoverDetailRequest.Title,
+                updateHandoverDetailRequest.Content, readerMemberList, updateHandoverDetailRequest.FileAttIds);
+
+            return Ok(new CommonResponse<string?>
+            {
+                Result = updatedJsonContent != null,
+                Data = updatedJsonContent,
+            });
+        }
+
 
         [HttpDelete("{handoverDetailId}")]
         [Authorize]
@@ -440,6 +484,8 @@ namespace handover_api.Controllers
             });
 
             handoverDetailWithReaders.HandoverDetailReader = handoverReaderDtoList;
+            var handoverDetailHandlers = _handoverService.GetHandoverDetailHandlersById(handoverDetailId);
+            handoverDetailWithReaders.HandoverDetailHandlers = handoverDetailHandlers;
 
 
             return Ok(new CommonResponse<HandoverDetailWithReaders>
@@ -523,6 +569,7 @@ namespace handover_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             Member reader = memberAndPermissionSetting.Member;
             var handoverDetailDtoList = _handoverService.GetMyHandoverDetailDtoList(reader.UserId);
+            var handoverDetailHandlers = _handoverService.GetHandoverDetailHandlersByIds(handoverDetailDtoList.Select(d => d.HandoverDetailId).ToList());
             foreach (var handoverDetailDto in handoverDetailDtoList)
             {
                 if (!string.IsNullOrEmpty(handoverDetailDto.FileAttIds))
@@ -531,6 +578,8 @@ namespace handover_api.Controllers
                     List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
                     handoverDetailDto.Files = fileDetailInfos;
                 }
+                var matchedHandoverDetailHandlers = handoverDetailHandlers.Where(h => h.HandoverDetailId == handoverDetailDto.HandoverDetailId).ToList();
+                handoverDetailDto.HandoverDetailHandlers = matchedHandoverDetailHandlers;
             }
             return Ok(new CommonResponse<List<MyHandoverDetailDto>>
             {
@@ -546,6 +595,7 @@ namespace handover_api.Controllers
             var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
             Member reader = memberAndPermissionSetting.Member;
             var handoverDetailDtoList = _handoverService.GetMyHandoverDetailDtoListV2(reader.UserId);
+            var handoverDetailHandlers = _handoverService.GetHandoverDetailHandlersByIds(handoverDetailDtoList.Select(d=>d.HandoverDetailId).ToList());
             foreach (var handoverDetailDto in handoverDetailDtoList)
             {
                 if (!string.IsNullOrEmpty(handoverDetailDto.FileAttIds))
@@ -554,6 +604,8 @@ namespace handover_api.Controllers
                     List<FileDetailInfo> fileDetailInfos = _handoverService.GetFileDetailInfos(fileAttIds);
                     handoverDetailDto.Files = fileDetailInfos;
                 }
+                var matchedHandoverDetailHandlers = handoverDetailHandlers.Where(h => h.HandoverDetailId == handoverDetailDto.HandoverDetailId).ToList();
+                handoverDetailDto.HandoverDetailHandlers = matchedHandoverDetailHandlers;
             }
             return Ok(new CommonResponse<List<MyHandoverDetailV2Dto>>
             {

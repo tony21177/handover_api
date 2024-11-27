@@ -28,5 +28,6 @@ namespace handover_api.Service.ValueObject
         public DateTime? ReadTime { get; set; }
         public string FileAttIds { get; set; }
         public List<FileDetailInfo> Files { get; set; } = new List<FileDetailInfo>();
+        public List<HandoverDetailHandler> HandoverDetailHandlers { get; set; } = new();
     }
 }
