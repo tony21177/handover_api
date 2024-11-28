@@ -8,7 +8,7 @@ namespace handover_api.Controllers.Request
         public string Title { get; set; } = null!;
 
         public string? Content { get; set; }
-        public List<CategoryComponent> categoryArray { get; set; } = new List<CategoryComponent>();
+        public List<CategoryComponent> CategoryArray { get; set; } = new List<CategoryComponent>();
 
         public List<string> FileAttIds { get; set; } = new List<String>();
         public List<string> ReaderUserIds { get; set; } = new List<String>();

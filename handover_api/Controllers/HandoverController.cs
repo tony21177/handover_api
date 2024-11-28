@@ -149,11 +149,11 @@ namespace handover_api.Controllers
             }
 
 
-            if (createHandoverDetailRequest.categoryArray.Any())
+            if (createHandoverDetailRequest.CategoryArray.Any())
             {
 
                 // 驗證是否同屬一個main
-                var categoryIdList = createHandoverDetailRequest.categoryArray.Select(c => c.CategoryId).ToList();
+                var categoryIdList = createHandoverDetailRequest.CategoryArray.Select(c => c.CategoryId).ToList();
                 var (matchedSheetMainSettings, matchedGroupSheetSettings) = _handoverService.GetSheetMainListByCategoryIdList(categoryIdList);
                 var matchedSheetMainIdList = matchedSheetMainSettings.Select(main => main.SheetId).ToList();
                 var matchedSheetGroupIdList = matchedGroupSheetSettings.Select(group => group.SheetGroupId).ToList();
@@ -177,7 +177,7 @@ namespace handover_api.Controllers
                 }
 
 
-                var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], createHandoverDetailRequest.categoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
+                var createdJsonContent = _handoverService.CreateHandOverDetailV2(matchedSheetMainIdList[0], createHandoverDetailRequest.CategoryArray, createHandoverDetailRequest.Title, createHandoverDetailRequest.Content, readerMemberList, creatorMember, createHandoverDetailRequest.FileAttIds);
 
                 return Ok(new CommonResponse<string?>
                 {
