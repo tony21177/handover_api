@@ -948,6 +948,7 @@ namespace handover_api.Service
                     newReaderUserIdList = readerMemberList.Select(r => r.UserId).ToList();
                     newReaderUserNameList = readerMemberList.Select(r => r.DisplayName).ToList();
                 }
+                
 
                 var oldTitle = handoverDetail.Title;
                 var oldContent = handoverDetail.Content;
@@ -994,7 +995,11 @@ namespace handover_api.Service
                         originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent,
                         oldFileAttIds, string.Join(",", handoverDetail.FileAttIds)
                         , Enum.GetName(ActionTypeEnum.Update));
-
+                    _dbContext.HandoverDetailReaders
+                        .Where(r => r.HandoverDetailId == handoverDetail.HandoverDetailId)
+                        .ExecuteUpdate(update => update
+                            .SetProperty(r => r.IsRead, false)
+                            .SetProperty(r => r.ReadTime, (DateTime?)null));
                     // Save changes to the database
                     _dbContext.SaveChanges();
 
