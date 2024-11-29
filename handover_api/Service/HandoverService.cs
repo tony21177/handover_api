@@ -387,6 +387,7 @@ namespace handover_api.Service
                     List<Models.CategoryItem> newCategoryItemList = new();
                     foreach(var categoryItem in category.ItemArray)
                     {
+                        categoryItem.ItemOption.ForEach(item => item.Values = new ItemOptionValues());
                         var newItemId = Guid.NewGuid().ToString();
                         var newCategoryItem = new Models.CategoryItem()
                         {
@@ -1276,10 +1277,6 @@ namespace handover_api.Service
 
             handoverSheetGroupDtoList.ForEach(groupDto =>
             {
-                if (groupDto.SheetGroupId == 303)
-                {
-                    var test = 123;
-                }
 
                 List<HandoverSheetCategorySetting> matchedHandoverSheetCategorySettingList = handoverSheetCategorySettingList.Where(s=>s.SheetGroupId==groupDto.SheetGroupId).ToList();
 
@@ -1289,6 +1286,14 @@ namespace handover_api.Service
                     var matchedCategoryItems = categoryItems.Where(c=>c.CategoryId==categorySetting.CategoryId).ToList();
                     var matchedCategoryItemDtoList = _mapper.Map<List<CategoryItemDto>>(matchedCategoryItems);
                     categorySetting.ItemArray = matchedCategoryItemDtoList;
+                    foreach (var item in matchedCategoryItemDtoList)
+                    {
+                        item.ItemOption.ForEach(option =>
+                        {
+                            if (option.Values == null) option.Values = new ItemOptionValues();
+                        });
+                    }
+
                 }
                 groupDto.CategoryArray = categorySettingDtoList;
             });
