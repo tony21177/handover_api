@@ -22,7 +22,7 @@ public partial class HandoverDetailHandler
     public string UserId { get; set; } = null!;
 
     [StringLength(45)]
-    public string? UserName { get; set; }
+    public string UserName { get; set; } = null!;
 
     [StringLength(300)]
     public string? Remarks { get; set; }

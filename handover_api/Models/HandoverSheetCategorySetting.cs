@@ -32,4 +32,6 @@ public partial class HandoverSheetCategorySetting
 
     [Column(TypeName = "timestamp")]
     public DateTime? UpdatedTime { get; set; }
+
+    public int? CategoryRank { get; set; }
 }

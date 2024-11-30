@@ -488,5 +488,56 @@ namespace handover_api.Controllers
             };
             return Ok(response);
         }
+
+
+        [HttpPost("CategoryRank/update")]
+        [Authorize]
+        public IActionResult UpdateCategoryRank(UpdateCategoryRankRequest updateCategoryRankRequest)
+        {
+            var memberAndPermissionSetting = _authHelpers.GetMemberAndPermissionSetting(User);
+            var permissionSetting = memberAndPermissionSetting?.PermissionSetting;
+            if (memberAndPermissionSetting == null || memberAndPermissionSetting.Member == null || permissionSetting == null || !permissionSetting.IsCreateHandover)
+            {
+                return Unauthorized(CommonResponse<dynamic>.BuildNotAuthorizeResponse());
+            }
+            var categorySettings = _handoverService.GetCategorySettingsByCategoryIdList(updateCategoryRankRequest.CategoryIdSeq);
+
+            var notExistingCategoryIdList = updateCategoryRankRequest.CategoryIdSeq.Except(categorySettings.Select(c => c.CategoryId)).ToList();
+            if (notExistingCategoryIdList.Any())
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = $"以下分類 ID 不存在: {string.Join(", ", notExistingCategoryIdList)}"
+                });
+            }
+            if (categorySettings.Select(c => c.MainSheetId).Distinct().Count() > 1)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "不可跨MainSheet"
+                });
+            }
+            if (categorySettings.Select(c => c.SheetGroupId).Distinct().Count() > 1)
+            {
+                return BadRequest(new CommonResponse<dynamic>
+                {
+                    Result = false,
+                    Message = "不可跨組別"
+                });
+            }
+
+
+
+            var (result, errorMsg) = _handoverService.UpdateCategoryRank(updateCategoryRankRequest.CategoryIdSeq);
+            var response = new CommonResponse<HandoverSheetGroup>()
+            {
+                Result = result,
+                Message = errorMsg,
+                Data = null
+            };
+            return Ok(response);
+        }
     }
 }

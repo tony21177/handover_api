@@ -115,6 +115,11 @@ namespace handover_api.Service
         {
             return _dbContext.HandoverSheetCategorySettings.Where(s=>s.MainSheetId==mainSheetId&&s.SheetGroupId==groupSheetId).ToList();
         }
+
+        public List<HandoverSheetCategorySetting> GetCategorySettingsByCategoryIdList(List<string> categoryIdList)
+        {
+            return _dbContext.HandoverSheetCategorySettings.Where(s => categoryIdList.Contains(s.CategoryId)).ToList();
+        }
         public HandoverDetail? GetHandoverDetail(string handoverDetailId)
         {
             return _dbContext.HandoverDetails.Where(d => d.HandoverDetailId == handoverDetailId).FirstOrDefault();
@@ -369,7 +374,7 @@ namespace handover_api.Service
             try
             {
                 var newCategorySettingList = new List<HandoverSheetCategorySetting> { };
-
+                int rank = 0;
                 createRequest.CategoryArray.ForEach(category =>
                 {
                     var newCategoryId = Guid.NewGuid().ToString();
@@ -380,6 +385,7 @@ namespace handover_api.Service
                         SheetGroupId = createRequest.SheetGroupId,
                         WeekDays = category.WeekDays,
                         CategoryName = category.CategoryName,
+                        CategoryRank = rank++
                     };
                     newCategorySettingList.Add(newCategory);
 
@@ -420,6 +426,35 @@ namespace handover_api.Service
 
         }
 
+
+        public (bool, string?) UpdateCategoryRank(List<string> categoryIdList)
+        {
+            using var scope = new TransactionScope();
+            try
+            {
+                int rank = 0;
+                categoryIdList.ForEach(c =>
+                {
+                    _dbContext.HandoverSheetCategorySettings
+                        .Where(s => s.CategoryId == c)
+                        .ExecuteUpdate(update => update.SetProperty(r => r.CategoryRank, rank));
+                    rank++;
+                });
+
+                _dbContext.SaveChanges(true);
+                // 提交事務
+                scope.Complete();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                // 處理事務失敗的例外
+                // 這裡可以根據實際需求進行錯誤處理
+                _logger.LogError("事務失敗[UpdateCategoryRank]：{msg}", ex.Message);
+                return (false, ex.Message);
+            }
+
+        }
 
         public (bool, string?) UpdateHandoverSheetCategorySetting(UpdateSheetSettingCategoryRequest request)
         {
