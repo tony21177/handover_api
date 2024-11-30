@@ -374,7 +374,8 @@ namespace handover_api.Service
             try
             {
                 var newCategorySettingList = new List<HandoverSheetCategorySetting> { };
-                int rank = 0;
+                var existingCategorySetting = _dbContext.HandoverSheetCategorySettings.Where(s => s.MainSheetId == createRequest.MainSheetId && s.SheetGroupId == createRequest.SheetGroupId).ToList();
+                int rank = existingCategorySetting.Count();
                 createRequest.CategoryArray.ForEach(category =>
                 {
                     var newCategoryId = Guid.NewGuid().ToString();
