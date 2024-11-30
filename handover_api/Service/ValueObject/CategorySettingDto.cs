@@ -15,6 +15,8 @@ namespace handover_api.Service.ValueObject
 
         public string CategoryName { get; set; } = null!;
 
+        public int? CategoryRank { get; set; }
+
         public DateTime? CreatedTime { get; set; }
 
         public DateTime? UpdatedTime { get; set; }
