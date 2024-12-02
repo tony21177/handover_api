@@ -1314,7 +1314,7 @@ namespace handover_api.Service
             handoverSheetGroupDtoList.ForEach(groupDto =>
             {
 
-                List<HandoverSheetCategorySetting> matchedHandoverSheetCategorySettingList = handoverSheetCategorySettingList.Where(s=>s.SheetGroupId==groupDto.SheetGroupId).ToList();
+                List<HandoverSheetCategorySetting> matchedHandoverSheetCategorySettingList = handoverSheetCategorySettingList.Where(s=>s.SheetGroupId==groupDto.SheetGroupId).OrderBy(s=>s.CategoryRank).ToList();
 
                 List<CategorySettingDto> categorySettingDtoList = _mapper.Map<List<CategorySettingDto>>(matchedHandoverSheetCategorySettingList);
                 foreach (var categorySetting in categorySettingDtoList)
