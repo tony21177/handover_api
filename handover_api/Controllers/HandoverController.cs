@@ -534,7 +534,7 @@ namespace handover_api.Controllers
             });
 
             sheetSettingAndDetail.HandoverDetailReader = handoverReaderDtoList;
-            var categoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetail.JsonContent).OrderByDescending(c=>c.GroupRank).ToList();
+            var categoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(handoverDetail.JsonContent).OrderByDescending(c=>c.CategoryRank).ToList();
             var distinctGroupIdList = categoryArray.Select(c=>c.SheetGroupId).Distinct().ToList();
 
             distinctGroupIdList.ForEach(groupId =>

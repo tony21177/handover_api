@@ -743,9 +743,10 @@ namespace handover_api.Service
                     category.WeekDays = matchedCategorySetting.WeekDays;
                     category.CategoryName = matchedCategorySetting.CategoryName;   
                     category.CreatedTime = matchedCategorySetting.CreatedTime;
-                    category.updatedTime = matchedCategorySetting.UpdatedTime;
+                    category.UpdatedTime = matchedCategorySetting.UpdatedTime;
                     category.GroupTitle = matchedGroupSetting?.GroupTitle;
                     category.GroupRank = matchedGroupSetting?.GroupRank;
+                    category.CategoryRank = matchedCategorySetting.CategoryRank;
                 }
             });
 
@@ -959,9 +960,10 @@ namespace handover_api.Service
                             category.WeekDays = matchedCategorySetting.WeekDays;
                             category.CategoryName = matchedCategorySetting.CategoryName;
                             category.CreatedTime = matchedCategorySetting.CreatedTime;
-                            category.updatedTime = matchedCategorySetting.UpdatedTime;
+                            category.UpdatedTime = matchedCategorySetting.UpdatedTime;
                             category.GroupTitle = matchedGroupSetting?.GroupTitle;
                             category.GroupRank = matchedGroupSetting?.GroupRank;
+                            category.CategoryRank = matchedCategorySetting.CategoryRank;
                         }
                     });
                     string jsonContent = System.Text.Json.JsonSerializer.Serialize(categoryArray);

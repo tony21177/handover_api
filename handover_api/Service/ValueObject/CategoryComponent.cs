@@ -11,10 +11,11 @@ namespace handover_api.Service.ValueObject
         public int? SheetGroupId { get; set; }
         public string? GroupTitle { get; set; }
         public int? GroupRank { get; set; }
+        public int? CategoryRank {  get; set; }
 
         public string? CategoryName { get; set; }
         public DateTime? CreatedTime { get; set; }    
-        public DateTime? updatedTime { get; set; }    
+        public DateTime? UpdatedTime { get; set; }    
 
         public List<CategoryItemValuesDto> ItemArray { get; set; } = new();
 
