@@ -428,7 +428,9 @@ namespace handover_api.Controllers
                 dto.Files = matchedFiles;
 
                 dto.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.JsonContent);
-                dto.CategoryArray = dto.CategoryArray.OrderBy(c=>c.CategoryRank).ToList();
+                dto.CategoryArray = dto.CategoryArray.OrderBy(c => c.CategoryRank)
+                        .ThenBy(c => c.GroupRank)
+                        .ToList();
             });
 
             var mainSheetIds = handoverDetailWithReadDtoList.Select(d=>d.MainSheetId).Distinct().ToList();
