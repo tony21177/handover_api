@@ -474,6 +474,7 @@ namespace handover_api.Service
                 request.CategoryArray.ForEach(category =>
                 {
                     var newCategoryId = Guid.NewGuid().ToString();
+                    int categoryRank = 0;
                     var newCategory = new HandoverSheetCategorySetting()
                     {
                         CategoryId = newCategoryId,
@@ -481,6 +482,7 @@ namespace handover_api.Service
                         SheetGroupId = request.SheetGroupId,
                         WeekDays = category.WeekDays,
                         CategoryName = category.CategoryName,
+                        CategoryRank = categoryRank++
                     };
                     newCategorySettingList.Add(newCategory);
 
