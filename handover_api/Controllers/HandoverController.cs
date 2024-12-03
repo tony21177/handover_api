@@ -22,6 +22,7 @@ namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class HandoverController : ControllerBase
     {
         private readonly IMapper _mapper;
@@ -427,6 +428,7 @@ namespace handover_api.Controllers
                 dto.Files = matchedFiles;
 
                 dto.CategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.JsonContent);
+                dto.CategoryArray = dto.CategoryArray.OrderBy(c=>c.CategoryRank).ToList();
             });
 
             var mainSheetIds = handoverDetailWithReadDtoList.Select(d=>d.MainSheetId).Distinct().ToList();

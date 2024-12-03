@@ -13,6 +13,7 @@ namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class AuthlayerController : Controller
     {
         private readonly AuthLayerService _authLayerService;

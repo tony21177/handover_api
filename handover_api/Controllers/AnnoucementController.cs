@@ -18,6 +18,7 @@ namespace handover_api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class AnnoucementController : Controller
     {
         private readonly AuthHelpers _authHelpers;

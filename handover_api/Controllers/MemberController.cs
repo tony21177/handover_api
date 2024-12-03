@@ -17,6 +17,7 @@ namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class MemberController : ControllerBase
     {
         private readonly MemberService _memberService;

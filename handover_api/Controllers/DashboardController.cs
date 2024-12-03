@@ -11,6 +11,7 @@ namespace handover_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(PermissionFilterAttribute))]
     public class DashboardController : ControllerBase
     {
         private readonly IMapper _mapper;
