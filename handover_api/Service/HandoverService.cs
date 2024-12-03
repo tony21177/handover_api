@@ -470,11 +470,10 @@ namespace handover_api.Service
                 _dbContext.CategoryItems.Where(i => existingCategoryIds.Contains(i.CategoryId)).ExecuteDelete();
                 _dbContext.HandoverSheetCategorySettings.Where(s => existingCategoryIds.Contains(s.CategoryId)).ExecuteDelete();
 
-
+                int categoryRank = 0;
                 request.CategoryArray.ForEach(category =>
                 {
                     var newCategoryId = Guid.NewGuid().ToString();
-                    int categoryRank = 0;
                     var newCategory = new HandoverSheetCategorySetting()
                     {
                         CategoryId = newCategoryId,
@@ -482,8 +481,9 @@ namespace handover_api.Service
                         SheetGroupId = request.SheetGroupId,
                         WeekDays = category.WeekDays,
                         CategoryName = category.CategoryName,
-                        CategoryRank = categoryRank++
+                        CategoryRank = categoryRank
                     };
+                    categoryRank++;
                     newCategorySettingList.Add(newCategory);
 
                     // category_item
