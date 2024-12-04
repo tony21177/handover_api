@@ -476,7 +476,7 @@ namespace handover_api.Controllers
         }
 
 
-        [HttpPost("/getUnRead")]
+        [HttpPost("getUnRead")]
         [Authorize]
         public IActionResult GetUnRead(GetUnReadRequest request)
         {
