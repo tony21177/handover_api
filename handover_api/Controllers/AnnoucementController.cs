@@ -31,6 +31,7 @@ namespace handover_api.Controllers
         private readonly IValidator<ListAnnoucementRequest> _listAnnoucementRequestValidator;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly FileUploadService _fileUploadService;
+        private readonly IValidator<GetUnReadRequest> _getUnReadRequestValidator;
 
         public AnnoucementController(AuthHelpers authHelpers, MemberService memberService, AnnouncementService announcementService, IMapper mapper, ILogger<AnnoucementController> logger, IWebHostEnvironment webHostEnvironment, FileUploadService fileUploadService)
         {
@@ -44,6 +45,7 @@ namespace handover_api.Controllers
             _listAnnoucementRequestValidator = new ListAnnouncementRequestValidator();
             _webHostEnvironment = webHostEnvironment;
             _fileUploadService = fileUploadService;
+            _getUnReadRequestValidator = new GetUnReadRequestValidator();
         }
 
         [HttpPost("create")]
@@ -471,6 +473,31 @@ namespace handover_api.Controllers
             };
             var fileStream = _fileUploadService.Download(fileDetail);
             return fileStream;
+        }
+
+
+        [HttpPost("/getUnRead")]
+        [Authorize]
+        public IActionResult GetUnRead(GetUnReadRequest request)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+
+
+            var validationResult = _getUnReadRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var data = _announcementService.GetUnReadDataList(request);
+
+            return Ok(new CommonResponse<List<AnnouncementUnReadDto>>
+            {
+                Result = true,
+                Data = data
+            });
         }
 
     }

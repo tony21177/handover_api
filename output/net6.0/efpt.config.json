@@ -82,6 +82,14 @@
       {
          "Name": "my_announcement",
          "ObjectType": 0
+      },
+      {
+         "Name": "announcement_not_read_view",
+         "ObjectType": 3
+      },
+      {
+         "Name": "handover_detail_not_read_view",
+         "ObjectType": 3
       }
    ],
    "UiHint": "local_hand_over",

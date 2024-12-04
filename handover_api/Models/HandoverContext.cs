@@ -21,6 +21,8 @@ public partial class HandoverContext : DbContext
 
     public virtual DbSet<AnnouncementHistory> AnnouncementHistories { get; set; }
 
+    public virtual DbSet<AnnouncementNotReadView> AnnouncementNotReadViews { get; set; }
+
     public virtual DbSet<Authlayer> Authlayers { get; set; }
 
     public virtual DbSet<CategoryItem> CategoryItems { get; set; }
@@ -32,6 +34,8 @@ public partial class HandoverContext : DbContext
     public virtual DbSet<HandoverDetailHandler> HandoverDetailHandlers { get; set; }
 
     public virtual DbSet<HandoverDetailHistory> HandoverDetailHistories { get; set; }
+
+    public virtual DbSet<HandoverDetailNotReadView> HandoverDetailNotReadViews { get; set; }
 
     public virtual DbSet<HandoverDetailReader> HandoverDetailReaders { get; set; }
 
@@ -106,6 +110,20 @@ public partial class HandoverContext : DbContext
             entity.Property(e => e.UpdatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
+        modelBuilder.Entity<AnnouncementNotReadView>(entity =>
+        {
+            entity.ToView("announcement_not_read_view");
+
+            entity.Property(e => e.AnnounceId).HasComment("announcement.AnnounceID");
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatorId).HasComment("對準 Member 的 UserID");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UserId).HasComment("member.UserID,收件人");
+        });
+
         modelBuilder.Entity<Authlayer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
@@ -156,6 +174,17 @@ public partial class HandoverContext : DbContext
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<HandoverDetailNotReadView>(entity =>
+        {
+            entity.ToView("handover_detail_not_read_view");
+
+            entity.Property(e => e.CreatedTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValueSql("'1'");
+            entity.Property(e => e.UpdatedTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<HandoverDetailReader>(entity =>

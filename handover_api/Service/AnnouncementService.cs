@@ -4,6 +4,7 @@ using handover_api.Models;
 using handover_api.Service.ValueObject;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
+using stock_api.Common.Utils;
 using System.Transactions;
 
 namespace handover_api.Service
@@ -593,6 +594,50 @@ namespace handover_api.Service
             List<string> unreadAnnounceIdList = unreadAnnouceReaderList.Select(uar => uar.AnnounceId).ToList();
             List<Announcement> unreadAnnouncements = GetAnnouncementsByAnnounceIdList(unreadAnnounceIdList);
             return unreadAnnouncements.Where(ua => ua.IsActive == true).ToList();
+        }
+
+
+        public List<AnnouncementUnReadDto> GetUnReadDataList(GetUnReadRequest request)
+        {
+            IQueryable<AnnouncementNotReadView> query = _dbContext.AnnouncementNotReadViews;
+            if (request.StartDate != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.StartDate).Value;
+                query = query.Where(h => h.CreatedTime >= startDateTime);
+            }
+            if (request.EndDate != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedTime<endDateTime);
+            }
+
+            var announcementNotReadList = query.ToList();
+            var announcementUnReadDto =
+            announcementNotReadList
+            .GroupBy(a => new { a.UserId, a.UserName, a.PhotoUrl }) // 按 UserId、UserName、PhotoUrl 分組
+            .Select(group => new AnnouncementUnReadDto
+            {
+                UserId = group.Key.UserId ?? string.Empty,
+                UserName = group.Key.UserName,
+                PhotoUrl = group.Key.PhotoUrl,
+                NotReadAnnouncementCount = group.Count(),
+                NotReadAnnouncementList = group.Select(a => new NotReadAnnouncement
+                {
+                    AnnounceId = a.AnnounceId,
+                    Title = a.Title,
+                    Content = a.Content,
+                    BeginPublishTime = a.BeginPublishTime,
+                    EndPublishTime = a.EndPublishTime,
+                    BeginViewTime = a.BeginViewTime,
+                    EndViewTime = a.EndViewTime,
+                    CreatorId = a.CreatorId,
+                    CreatorName = a.CreatorName,
+                    CreatedTime = a.CreatedTime,
+                    UpdatedTime = a.UpdatedTime
+                }).ToList()
+            })
+            .ToList();
+            return announcementUnReadDto;
         }
     }
 }

@@ -36,6 +36,7 @@ namespace handover_api.Controllers
         private readonly UpdateHandoverDetailRequestValidator _updateHandoverDetailRequestValidator;
         private readonly UpdateHandoverDetailRequestValidatorV2 _updateHandoverDetailRequestValidatorV2;
         private readonly AddDetailHandlersValidator _addDetailHandlersValidator;
+        private readonly IValidator<GetUnReadRequest> _getUnReadRequestValidator;
 
         public HandoverController(IMapper mapper, ILogger<HandoverController> logger, AuthHelpers authHelpers, HandoverService handoverService, MemberService memberService, FileUploadService fileUploadService)
         {
@@ -51,6 +52,7 @@ namespace handover_api.Controllers
 
             _addDetailHandlersValidator = new AddDetailHandlersValidator(_memberService);
             _fileUploadService = fileUploadService;
+            _getUnReadRequestValidator = new GetUnReadRequestValidator();
         }
 
 
@@ -720,6 +722,30 @@ namespace handover_api.Controllers
             return Ok(new CommonResponse<List<HandoverDetailWithReadDto>>
             {
                 Result = true,
+            });
+        }
+
+        [HttpPost("getUnRead")]
+        [Authorize]
+        public IActionResult GetUnRead(GetUnReadRequest request)
+        {
+            var loginMemberAndPermission = _authHelpers.GetMemberAndPermissionSetting(User);
+            var userId = loginMemberAndPermission!.Member.UserId;
+
+
+            var validationResult = _getUnReadRequestValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(CommonResponse<dynamic>.BuildValidationFailedResponse(validationResult));
+            }
+
+            var data = _handoverService.GetUnReadDataList(request);
+
+            return Ok(new CommonResponse<List<HandoverUnReadDto>>
+            {
+                Result = true,
+                Data = data
             });
         }
     }

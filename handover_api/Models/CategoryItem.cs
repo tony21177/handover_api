@@ -24,7 +24,7 @@ public partial class CategoryItem
     [StringLength(45)]
     public string ItemType { get; set; } = null!;
 
-    [StringLength(100)]
+    [StringLength(1000)]
     public string? ItemTitle { get; set; }
 
     [StringLength(45)]

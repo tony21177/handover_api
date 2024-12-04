@@ -1396,5 +1396,45 @@ namespace handover_api.Service
         {
             return _dbContext.HandoverDetailHandlers.Where(h => handoverDetailIdList.Contains(h.HandoverDetailId)).ToList();
         }
+
+        public List<HandoverUnReadDto> GetUnReadDataList(GetUnReadRequest request)
+        {
+            IQueryable<HandoverDetailNotReadView> query = _dbContext.HandoverDetailNotReadViews;
+            if (request.StartDate != null)
+            {
+                var startDateTime = DateTimeHelper.ParseDateString(request.StartDate).Value;
+                query = query.Where(h => h.CreatedTime >= startDateTime);
+            }
+            if (request.EndDate != null)
+            {
+                var endDateTime = DateTimeHelper.ParseDateString(request.EndDate).Value.AddDays(1);
+                query = query.Where(h => h.CreatedTime < endDateTime);
+            }
+
+            var handoverNotReadList = query.ToList();
+            var handoverUnReadDtoList =
+            handoverNotReadList
+            .GroupBy(a => new { a.UserId, a.UserName, a.PhotoUrl }) // 按 UserId、UserName、PhotoUrl 分組
+            .Select(group => new HandoverUnReadDto
+            {
+                UserId = group.Key.UserId ?? string.Empty,
+                UserName = group.Key.UserName,
+                PhotoUrl = group.Key.PhotoUrl,
+                NotReadHandoverCount = group.Count(),
+                NotReadHandoverList = group.Select(a => new NotReadHandover
+                {
+                    HandoverDetailId = a.HandoverDetailId,
+                    Title = a.Title,
+                    Content = a.Content,
+                    JsonContent = a.JsonContent,
+                    CreatorId = a.CreatorId,
+                    CreatorName = a.CreatorName,
+                    CreatedTime = a.CreatedTime,
+                    UpdatedTime = a.UpdatedTime
+                }).ToList()
+            })
+            .ToList();
+            return handoverUnReadDtoList;
+        }
     }
 }
