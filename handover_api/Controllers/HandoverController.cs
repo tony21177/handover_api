@@ -634,6 +634,37 @@ namespace handover_api.Controllers
             });
         }
 
+
+        [HttpGet("v2/histories/{handoverDetailId}")]
+        [Authorize]
+        public IActionResult GetHandoverDetailHistoriesV2(string handoverDetailId)
+        {
+
+            var handoverDetailHistories = _handoverService.GetHandoverDetailHistories(handoverDetailId);
+
+            var handoverDetailHistoryDtoList = _mapper.Map<List<HandoverDetailHistoryDto>>(handoverDetailHistories);
+            handoverDetailHistoryDtoList.ForEach(dto =>
+            {
+                if (dto.OldJsonContent != null)
+                {
+                    dto.OldCategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.OldJsonContent);
+                }
+                if (dto.NewJsonContent != null)
+                {
+                    dto.NewCategoryArray = JsonConvert.DeserializeObject<List<CategoryComponent>>(dto.NewJsonContent);
+                }
+
+            });
+
+
+            return Ok(new CommonResponse<List<HandoverDetailHistoryDto>>
+            {
+                Result = true,
+                Data = handoverDetailHistoryDtoList
+            });
+        }
+
+
         [HttpPost("Files/upload")]
         [Authorize]
         public async Task<IActionResult> UploadFile([FromForm] UploadFilesRequest uploadFilesRequest)

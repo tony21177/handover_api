@@ -147,6 +147,9 @@ namespace MaiBackend.Common.AutoMapper
 
             CreateMap<HandoverSheetCategorySetting, CategorySettingDto>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<HandoverDetailHistory, HandoverDetailHistoryDto>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
 
 
