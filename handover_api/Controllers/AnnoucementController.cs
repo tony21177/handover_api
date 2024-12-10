@@ -163,6 +163,19 @@ namespace handover_api.Controllers
                 };
             }).ToList();
 
+            var myAnnouncements = _announcementService.GetMyAnnouncementsByUserId(userId);
+            List<MyAnnouncementWithAttachmentsDto> myAnnouncementsWithAttachList = new List<MyAnnouncementWithAttachmentsDto>();
+            myAnnouncements.ForEach(myAnnouncement =>
+            {
+                var matchedAnnouncement = result.Where(a=>a.AnnounceId==myAnnouncement.AnnounceId).FirstOrDefault();
+                if (matchedAnnouncement != null)
+                {
+                    matchedAnnouncement.IsBookToTop = myAnnouncement.IsBookToTop;
+                    matchedAnnouncement.IsRemind = myAnnouncement.IsRemind; 
+                }
+                matchedAnnouncement.UserId = userId;
+            });
+
             return Ok(new CommonResponse<List<AnnouncementWithAttachments>>
             {
                 Result = true,

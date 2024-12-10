@@ -20,5 +20,11 @@ namespace handover_api.Controllers.Dto
         public List<AnnounceAttachment> AnnounceAttachments { get; set; } = new List<AnnounceAttachment>();
 
         public bool? IsRead { get; set; }
+
+        public string UserId { get; set; } = null!;
+
+        public bool IsBookToTop { get; set; } = false;
+
+        public bool IsRemind { get; set; } = false;
     }
 }
