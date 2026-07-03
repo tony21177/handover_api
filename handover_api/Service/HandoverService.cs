@@ -954,9 +954,9 @@ namespace handover_api.Service
                     categoryArray.ForEach(category =>
                     {
                         var matchedCategorySetting = categorySettings.Find(c => c.CategoryId == category.CategoryId);
-                        var matchedGroupSetting = groupSettings.Find(c => c.SheetGroupId == matchedCategorySetting.SheetGroupId);
                         if (matchedCategorySetting != null)
                         {
+                            var matchedGroupSetting = groupSettings.Find(c => c.SheetGroupId == matchedCategorySetting.SheetGroupId);
                             category.MainSheetId = matchedCategorySetting.MainSheetId;
                             category.SheetGroupId = matchedCategorySetting.SheetGroupId;
                             category.WeekDays = matchedCategorySetting.WeekDays;

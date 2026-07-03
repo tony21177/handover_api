@@ -547,11 +547,11 @@ namespace handover_api.Controllers
             {
                 var groupWithCategoryArrayDto = new GroupWithCategoryArrayDto()
                 {
-                    SheetGroupId = groupId.Value
+                    SheetGroupId = groupId ?? 0
                 };
                 var matchedCategoryArray = categoryArray.Where(c => c.SheetGroupId == groupId).ToList();
                 groupWithCategoryArrayDto.GroupTitle = matchedCategoryArray[0].GroupTitle;
-                groupWithCategoryArrayDto.GroupRank = matchedCategoryArray[0].GroupRank.Value;
+                groupWithCategoryArrayDto.GroupRank = matchedCategoryArray[0].GroupRank ?? 0;
                 groupWithCategoryArrayDto.CategoryArray = matchedCategoryArray;
                 sheetSettingAndDetail.HandoverSheetGroupList.Add(groupWithCategoryArrayDto);
             });
