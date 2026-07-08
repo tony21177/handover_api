@@ -267,7 +267,7 @@ namespace handover_api.Controllers
             List<Member> readerMemberList = _memberService.GetMembersByUserIdList(updateHandoverDetailRequest.ReaderUserIds);
 
             var updatedJsonContent = _handoverService.UpdateHandoverV2(handoverDetail, updateHandoverDetailRequest.CategoryArray, updateHandoverDetailRequest.Title,
-                updateHandoverDetailRequest.Content, readerMemberList, updateHandoverDetailRequest.FileAttIds);
+                updateHandoverDetailRequest.Content, readerMemberList, updateHandoverDetailRequest.FileAttIds, creatorMember);
 
             return Ok(new CommonResponse<string?>
             {

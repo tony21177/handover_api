@@ -33,6 +33,10 @@ namespace handover_api.Service.ValueObject
 
         public string? CreatorName { get; set; }
 
+        public string? ModifierId { get; set; }
+
+        public string? ModifierName { get; set; }
+
         public DateTime? CreatedTime { get; set; }
 
         public string? OldReaderUserIds { get; set; }

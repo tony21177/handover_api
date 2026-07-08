@@ -45,6 +45,12 @@ public partial class HandoverDetailHistory
     [StringLength(45)]
     public string? CreatorName { get; set; }
 
+    [StringLength(45)]
+    public string? ModifierId { get; set; }
+
+    [StringLength(45)]
+    public string? ModifierName { get; set; }
+
     [Column(TypeName = "timestamp")]
     public DateTime? CreatedTime { get; set; }
 

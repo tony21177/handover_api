@@ -928,7 +928,7 @@ namespace handover_api.Service
             }
         }
 
-        public string? UpdateHandoverV2(HandoverDetail handoverDetail,List<CategoryComponent>? categoryArray, String? title, String? content, List<Member>? readerMemberList, List<string> fileAttidList)
+        public string? UpdateHandoverV2(HandoverDetail handoverDetail,List<CategoryComponent>? categoryArray, String? title, String? content, List<Member>? readerMemberList, List<string> fileAttidList, Member modifier)
         {
             string oldJsonContent = handoverDetail.JsonContent;
             string oldFileAttIds = handoverDetail.FileAttIds;
@@ -1035,7 +1035,7 @@ namespace handover_api.Service
                     AddHandoverDetailHistory(handoverDetail, oldTitle, newTitle, oldContent, newContent,
                         originalReaderUserIdList, newReaderUserIdList, originalReaderUserNames, newReaderUserNameList, oldJsonContent, newJsonContent,
                         oldFileAttIds, string.Join(",", handoverDetail.FileAttIds)
-                        , Enum.GetName(ActionTypeEnum.Update));
+                        , Enum.GetName(ActionTypeEnum.Update), modifier?.UserId, modifier?.DisplayName);
                     _dbContext.HandoverDetailReaders
                         .Where(r => r.HandoverDetailId == handoverDetail.HandoverDetailId)
                         .ExecuteUpdate(update => update
@@ -1138,7 +1138,8 @@ namespace handover_api.Service
 
         public void AddHandoverDetailHistory(HandoverDetail newHandoverDetail, string oldTitle, string newTitle, string oldContent, string newContent,
             List<string> oldReaderUserIdList, List<string> newReaderUserIdList, List<string> oldReaderUserNameList, List<string> newReaderUserNameList,
-            string oldJsonContent, string newJsonContent, string? oldFileAttids, string? newFileAttIds, string action)
+            string oldJsonContent, string newJsonContent, string? oldFileAttids, string? newFileAttIds, string action,
+            string? modifierId = null, string? modifierName = null)
         {
 
             if (action == Enum.GetName(ActionTypeEnum.Update))
@@ -1149,6 +1150,8 @@ namespace handover_api.Service
                     MainSheetId = newHandoverDetail.MainSheetId,
                     CreatorId = newHandoverDetail.CreatorId,
                     CreatorName = newHandoverDetail.CreatorName,
+                    ModifierId = modifierId ?? newHandoverDetail.CreatorId,
+                    ModifierName = modifierName ?? newHandoverDetail.CreatorName,
 
                     OldTitle = oldTitle,
                     OldJsonContent = oldJsonContent,
@@ -1174,6 +1177,8 @@ namespace handover_api.Service
                     MainSheetId = newHandoverDetail.MainSheetId,
                     CreatorId = newHandoverDetail.CreatorId,
                     CreatorName = newHandoverDetail.CreatorName,
+                    ModifierId = modifierId ?? newHandoverDetail.CreatorId,
+                    ModifierName = modifierName ?? newHandoverDetail.CreatorName,
 
                     NewTitle = newTitle,
                     NewContent = newContent,
